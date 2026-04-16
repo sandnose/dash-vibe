@@ -18,6 +18,8 @@ dev = [
     "ruff>=0.4",
     "pytest>=8.0",
     "pytest-httpx>=0.30",
+    "playwright>=1.44",
+    "pytest-playwright>=0.5",
 ]
 
 [tool.setuptools.packages.find]
