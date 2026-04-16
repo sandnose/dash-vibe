@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from elhub.labels import label_production_group
+
 PRODUCTION_COLORS: dict[str, str] = {
     "solar":     "#f4a523",
     "hydro":     "#1a6b8a",
@@ -39,19 +41,22 @@ def history_chart(df: pd.DataFrame, municipality_name: str) -> go.Figure:
         .sum()
         .reset_index()
     )
+    agg["produksjonstype"] = agg["production_group"].map(label_production_group)
 
     fig = px.line(
         agg,
         x="usage_date",
         y="installed_capacity_kw",
-        color="production_group",
-        color_discrete_map=PRODUCTION_COLORS,
+        color="produksjonstype",
+        color_discrete_map={
+            label_production_group(k): v for k, v in PRODUCTION_COLORS.items()
+        },
         labels={
             "usage_date": "",
-            "installed_capacity_kw": "Installed capacity (kW)",
-            "production_group": "Source",
+            "installed_capacity_kw": "Installert kapasitet (kW)",
+            "produksjonstype": "Produksjonstype",
         },
-        title=f"Installed capacity over time — {municipality_name}",
+        title=f"Installert kapasitet over tid — {municipality_name}",
     )
     fig.update_layout(**_LAYOUT_DEFAULTS, legend_title_text="")
     return fig
@@ -63,7 +68,7 @@ def leaders_chart(df: pd.DataFrame, group: str, top_n: int = 10) -> go.Figure:
 
     Args:
         df: Snapshot DataFrame from fetch_latest_snapshot().
-        group: Production group to rank by (e.g. "solar").
+        group: Production group ID (e.g. "solar").
         top_n: Number of municipalities to show.
     """
     filtered = df[df["production_group"] == group]
@@ -82,10 +87,10 @@ def leaders_chart(df: pd.DataFrame, group: str, top_n: int = 10) -> go.Figure:
         orientation="h",
         color_discrete_sequence=[PRODUCTION_COLORS.get(group, "#2d6a4f")],
         labels={
-            "installed_capacity_kw": "Installed capacity (kW)",
+            "installed_capacity_kw": "Installert kapasitet (kW)",
             "municipality_name": "",
         },
-        title=f"Top {top_n} municipalities — {group.capitalize()}",
+        title=f"Topp {top_n} kommuner — {label_production_group(group)}",
     )
     fig.update_layout(**_LAYOUT_DEFAULTS, showlegend=False)
     return fig

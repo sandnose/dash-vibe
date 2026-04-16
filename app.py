@@ -3,79 +3,62 @@ from __future__ import annotations
 import streamlit as st
 from streamlit_folium import st_folium
 
-from components.charts import history_chart, leaders_chart
-from components.map import build_choropleth
 from elhub.client import fetch_history, fetch_latest_snapshot
 from elhub.geo import load_kommuner_geojson
+from elhub.labels import (
+    PRODUCTION_GROUP_LABELS,
+    label_metering_type,
+    label_production_group,
+)
+from components.charts import history_chart, leaders_chart
+from components.map import build_choropleth
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="dash-vibe · Norwegian Electricity",
+    page_title="dash-vibe · Norsk Elektrisitet",
     page_icon="⚡",
     layout="wide",
 )
 
-# ── Theme injection ────────────────────────────────────────────────────────────
+# ── Theme ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-
-    /* Brand background */
-    .stApp { background-color: #fafaf7; }
-
-    /* Typography */
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     h1, h2, h3 { font-family: 'EB Garamond', serif; color: #1a3a2a; }
-    h1 { font-size: 1.9rem !important; font-weight: 400 !important; letter-spacing: -0.01em; }
-
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] { border-bottom: 1px solid #ddd9d0; gap: 0; }
-    .stTabs [data-baseweb="tab"] {
-        font-family: 'Inter', sans-serif;
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #999;
-        padding: 0.6rem 1.5rem;
-        background: transparent;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #1a3a2a !important;
-        border-bottom: 2px solid #1a3a2a !important;
-        font-weight: 600;
-    }
-
-    /* Dividers */
-    [data-testid="stDivider"] { border-color: #ddd9d0; }
-
-    /* Primary button — brand green */
-    .stButton > button[kind="primary"] {
-        background-color: #1a3a2a !important;
-        border-color: #1a3a2a !important;
-        font-family: 'Inter', sans-serif;
-        font-weight: 500;
-        letter-spacing: 0.02em;
-    }
-    .stButton > button[kind="primary"]:hover {
-        background-color: #2d6a4f !important;
-        border-color: #2d6a4f !important;
-    }
-
-    /* Hide Streamlit decoration bar */
-    [data-testid="stDecoration"] { display: none; }
+    .stTabs [data-baseweb="tab"] { font-family: 'Inter', sans-serif; }
+    .stTabs [aria-selected="true"] { color: #1a3a2a; border-bottom-color: #1a3a2a; }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Header ─────────────────────────────────────────────────────────────────────
-st.title("Norwegian Electricity")
-st.caption("Installed generation capacity per municipality · [Elhub open data](https://api.elhub.no)")
+col_title, col_info = st.columns([10, 1])
+with col_title:
+    st.title("⚡ Norsk Elektrisitetsdashbord")
+    st.caption("Data fra [Elhub](https://api.elhub.no) · Åpne data")
+with col_info:
+    with st.popover("ℹ️"):
+        st.markdown("""
+### Om dashbordet
+Visualiserer åpne datasett fra **Elhub** — Norges datahub for elektrisitet.
 
-# ── Load shared data (always needed) ──────────────────────────────────────────
-with st.spinner("Loading electricity data…"):
+**Kilder**
+- Kraftdata: [api.elhub.no](https://api.elhub.no)
+- Kommunekart: [robhop/fylker-og-kommuner](https://github.com/robhop/fylker-og-kommuner)
+  *(Takk til Robert Hopland for kartdataene!)*
+- Kartverkets data under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+
+**Kildekode**
+[github.com/sandnose/dash-vibe](https://github.com/sandnose/dash-vibe)
+        """)
+
+# ── Load shared data ───────────────────────────────────────────────────────────
+with st.spinner("Laster inn data…"):
     snapshot_df = fetch_latest_snapshot()
     geojson = load_kommuner_geojson()
 
 if snapshot_df.empty:
-    st.error("Could not load data from Elhub. Please try again later.")
+    st.error("Kunne ikke laste data fra Elhub. Prøv igjen senere.")
     st.stop()
 
 latest_date = snapshot_df["usage_date"].max()
@@ -87,122 +70,164 @@ all_municipalities = (
 )
 
 # ── Tabs ───────────────────────────────────────────────────────────────────────
-tab_map, tab_history, tab_leaders = st.tabs(["Map", "History", "Leaders"])
+tab_map, tab_history, tab_leaders, tab_explain = st.tabs([
+    "🗺️ Kart",
+    "📈 Historikk",
+    "🏆 Topp kommuner",
+    "📖 Forklaring",
+])
 
 # ════════════════════════════════════════════════════════════════════════════════
-# TAB 1 — MAP
+# TAB 1 — KART
 # ════════════════════════════════════════════════════════════════════════════════
 with tab_map:
     col_controls, col_map = st.columns([1, 3])
 
     with col_controls:
-        st.markdown(
-            f'<div style="margin-bottom:1.25rem">'
-            f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:3px">Snapshot</div>'
-            f'<div style="font-family:\'EB Garamond\',serif;font-size:1.1rem;color:#1a3a2a">{latest_date.strftime("%d %b %Y")}</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"**Data per:** {latest_date.strftime('%d. %b %Y')}")
+        st.divider()
 
         selected_groups = st.multiselect(
-            "Production source",
+            "Produksjonstype",
             options=all_groups,
             default=all_groups,
-            format_func=str.capitalize,
+            format_func=label_production_group,
         )
 
-        metering_type = st.radio(
-            "Scale",
-            options=["Both", "E18 — Grid scale", "E19 — Prosumers"],
+        metering_raw = st.radio(
+            "Målerpunktkategori",
+            options=["Both", "E18", "E19"],
+            format_func=label_metering_type,
             index=0,
         )
-        metering_code = {
-            "Both": "Both",
-            "E18 — Grid scale": "E18",
-            "E19 — Prosumers": "E19",
-        }[metering_type]
 
     with col_map:
         if not selected_groups:
-            st.info("Select at least one production source.")
+            st.info("Velg minst én produksjonstype.")
         else:
-            m = build_choropleth(snapshot_df, geojson, selected_groups, metering_code)
-            st_folium(m, width="100%", height=850, returned_objects=[])
+            m = build_choropleth(snapshot_df, geojson, selected_groups, metering_raw)
+            st_folium(m, use_container_width=True, height=850, returned_objects=[])
 
 # ════════════════════════════════════════════════════════════════════════════════
-# TAB 2 — HISTORY (lazy: only fetches when tab is active)
+# TAB 2 — HISTORIKK
 # ════════════════════════════════════════════════════════════════════════════════
 with tab_history:
     col_sel, col_chart = st.columns([1, 3])
 
     with col_sel:
         selected_name = st.selectbox(
-            "Municipality",
+            "Kommune",
             options=all_municipalities["municipality_name"].tolist(),
         )
         selected_id = all_municipalities.loc[
             all_municipalities["municipality_name"] == selected_name, "municipality_id"
         ].values[0]
 
-        months_back = st.slider("Months of history", min_value=1, max_value=24, value=12)
-
-        hist_metering_type = st.radio(
-            "Scale",
-            options=["Both", "E18 — Grid scale", "E19 — Prosumers"],
-            index=0,
-        )
-        hist_metering_code = {
-            "Both": "Both",
-            "E18 — Grid scale": "E18",
-            "E19 — Prosumers": "E19",
-        }[hist_metering_type]
-
-        load_history = st.button("Load history", type="primary")
+        months_back = st.slider("Måneder historikk", min_value=1, max_value=24, value=12)
+        load_history = st.button("Vis historikk", type="primary")
 
     with col_chart:
         if load_history:
-            with st.spinner(f"Loading history for {selected_name}…"):
+            with st.spinner(f"Laster historikk for {selected_name}…"):
                 hist_df = fetch_history(selected_id, months=months_back)
             if hist_df.empty:
-                st.info("No historical data found for this municipality.")
+                st.info("Ingen historiske data funnet for denne kommunen.")
             else:
-                if hist_metering_code != "Both":
-                    hist_df = hist_df[hist_df["metering_type"] == hist_metering_code]
-                st.plotly_chart(history_chart(hist_df, selected_name), use_container_width=True)
+                st.plotly_chart(
+                    history_chart(hist_df, selected_name),
+                    use_container_width=True,
+                )
         else:
-            st.markdown(
-                '<div style="display:flex;align-items:center;justify-content:center;'
-                'height:320px;color:#ccc;font-family:\'EB Garamond\',serif;'
-                'font-size:1.15rem;font-style:italic;">'
-                'Select a municipality and load history to see trends'
-                '</div>',
-                unsafe_allow_html=True,
-            )
+            st.info("Velg en kommune og klikk **Vis historikk**.")
 
 # ════════════════════════════════════════════════════════════════════════════════
-# TAB 3 — LEADERS
+# TAB 3 — TOPP KOMMUNER
 # ════════════════════════════════════════════════════════════════════════════════
 with tab_leaders:
-    st.markdown(
-        f'<div style="margin-bottom:1.25rem">'
-        f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:3px">Snapshot</div>'
-        f'<div style="font-family:\'EB Garamond\',serif;font-size:1.1rem;color:#1a3a2a">{latest_date.strftime("%d %b %Y")}</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"**Data per:** {latest_date.strftime('%d. %b %Y')}")
+    st.divider()
 
-    top_n = st.slider("Show top N municipalities", min_value=5, max_value=20, value=10)
+    top_n = st.slider("Antall kommuner", min_value=5, max_value=20, value=10)
 
     cols = st.columns(2)
-    for i, group in enumerate(["hydro", "solar", "wind", "thermal", "other", "remainder"]):
+    for i, group in enumerate(["hydro", "solar", "wind", "thermal", "other"]):
         if group not in all_groups:
             continue
         with cols[i % 2]:
-            fig = leaders_chart(snapshot_df, group, top_n=top_n)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(
+                leaders_chart(snapshot_df, group, top_n=top_n),
+                use_container_width=True,
+            )
 
-    if "remainder" in all_groups:
-        st.caption(
-            "**Remainder** — Elhub privacy bucket: group totals too small to disclose "
-            "without identifying individual producers."
-        )
+# ════════════════════════════════════════════════════════════════════════════════
+# TAB 4 — FORKLARING
+# ════════════════════════════════════════════════════════════════════════════════
+with tab_explain:
+    st.markdown("## Hva viser dashbordet?")
+    st.markdown("""
+Dette dashbordet visualiserer **installert kapasitet** for kraftproduksjon i norske kommuner,
+basert på åpne data fra Elhub — Norges datahub for elektrisitetsmålinger.
+    """)
+
+    st.divider()
+
+    with st.expander("⚡ Hva er installert kapasitet?"):
+        st.markdown("""
+**Installert kapasitet** er den maksimale effekten et kraftanlegg kan produsere,
+målt i **kilowatt (kW)**.
+
+Det er ikke det samme som faktisk produksjon — et vannkraftverk med 100 MW installert kapasitet
+produserer ikke alltid 100 MW. Kapasiteten viser *potensialet*, ikke det *faktiske* uttaket.
+
+Tenk på det som motorkraften i en bil: du har 200 hk, men kjører ikke alltid for fullt.
+        """)
+
+    with st.expander("🏭 Produksjonstyper"):
+        for group_id, label in PRODUCTION_GROUP_LABELS.items():
+            descriptions = {
+                "solar": "Solcellepaneler som omdanner sollys til elektrisitet.",
+                "hydro": "Vannkraftverk som utnytter rennende eller fallende vann.",
+                "wind": "Vindturbiner som omdanner vindenergi til elektrisitet.",
+                "thermal": "Kraftverk som bruker varme som energikilde (inkl. biomasse, avfall).",
+                "nuclear": "Kjernekraftverk — Norge har ingen per i dag.",
+                "other": "Andre eller uspesifiserte produksjonsteknologier.",
+            }
+            st.markdown(f"**{label}** — {descriptions.get(group_id, '')}")
+
+    with st.expander("📍 Målerpunktkategorier"):
+        st.markdown("""
+Elhub skiller mellom to typer produksjonsmålepunkter:
+
+**Produksjon** *(tidligere kalt E18)*
+Store, nettilkoblede kraftanlegg som leverer strøm direkte til nettet.
+Typisk vannkraft, vindparker og større solcelleinstallasjoner.
+
+**Plusspunkt** *(tidligere kalt E19)*
+Mindre anlegg hos forbrukere som også produserer strøm — såkalte *prosumenter*.
+Typisk solcellepaneler på hus og hytter.
+        """)
+
+    with st.expander("🗺️ Geografiske nivåer"):
+        st.markdown("""
+Dataene kan aggregeres på ulike geografiske nivåer:
+
+- **Kommune** — Norges 356 kommuner. Brukes i kartvisningen.
+- **Prisområde** — Norge er delt i 5 prisområder (NO1–NO5) basert på strømnettets kapasitet.
+- **Grunnkrets** — Statistisk undernivå av kommunen. Mer detaljert, men vanskeligere å tolke.
+        """)
+
+    with st.expander("📅 Datoer og oppdatering"):
+        st.markdown("""
+- Dataene oppdateres daglig av Elhub.
+- Kartet viser alltid **siste tilgjengelige dag** (typisk 1–3 dager forsinket).
+- Historikkvisningen henter én måneds data om gangen på grunn av API-begrensninger.
+- Installert kapasitet endrer seg sakte — store hopp skyldes vanligvis nye anlegg
+  som tas i bruk eller gamle som stenges.
+        """)
+
+    st.divider()
+    st.caption(
+        "Data: [Elhub Energy Data API](https://api.elhub.no) · "
+        "Kart: [robhop/fylker-og-kommuner](https://github.com/robhop/fylker-og-kommuner) "
+        "(Kartverket, CC BY 4.0)"
+    )

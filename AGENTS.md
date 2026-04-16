@@ -1,10 +1,10 @@
 # Agent Onboarding Guide — dash-vibe
 
 ## Quick start for all agents
-1. Read `CLAUDE.md` first — full project context, stack, decisions
-2. Read `skills/elhub.md` before touching any data/API logic
+1. Read `CLAUDE.md` — full project context, stack, decisions
+2. Read `skills/elhub.md` — API reference, all datasets, Norwegian label mapping
 3. Check open GitHub Issues before starting work
-4. **Never push directly to main** — always work on a branch and open a PR
+4. **Never push directly to main** — branch and open a PR
 5. Run `just check` before opening a PR
 
 ## Branch & PR convention
@@ -14,7 +14,38 @@
 | UX | `ux/issue-{n}-short-description` |
 | Test | rarely needs PRs — files issues instead |
 
-PRs are reviewed and merged by Christoffer. Keep PRs focused — one issue per PR.
+PRs are reviewed and merged by Christoffer. One issue per PR.
+
+## GitHub authentication
+**Always use the token from `.env` for all GitHub operations — never interactive HTTPS.**
+
+```bash
+# Read token
+GITHUB_TOKEN=$(grep GITHUB_TOKEN .env | cut -d= -f2)
+
+# Configure git to use token (run once per session)
+git remote set-url origin https://${GITHUB_TOKEN}@github.com/sandnose/dash-vibe.git
+```
+
+All `git push`, `git pull`, `git clone` operations must use the token-embedded remote URL above.
+Never use `gh auth login` or browser-based OAuth.
+
+## UI language rules
+- **All user-facing text is in Norwegian** — labels, tooltips, tab names, error messages, captions
+- **Code stays in English** — variable names, function names, comments, commit messages
+- **Never show raw API codes** in the UI — use Norwegian display names from `skills/elhub.md`
+  - E18 → "Produksjon", E19 → "Plusspunkt"
+  - `solar` → "Solkraft", `hydro` → "Vannkraft", `wind` → "Vindkraft"
+  - `thermal` → "Varmekraft", `other` → "Annet"
+
+## Component standards
+Before building a custom component, check in this order:
+1. **Streamlit builtins** — `st.metric`, `st.tabs`, `st.popover`, `st.columns`, etc.
+2. **streamlit-extras** — check https://extras.streamlit.app for ready-made components
+3. **Plotly Express** — for charts (`px.line`, `px.bar`, `px.choropleth`)
+4. **Custom implementation** — only if none of the above fit
+
+Never build a custom Plotly chart when `px` can do the same thing in one call.
 
 ---
 
@@ -23,14 +54,16 @@ PRs are reviewed and merged by Christoffer. Keep PRs focused — one issue per P
 **Owns:** `elhub/`, `components/charts.py` (data logic), `app.py` (data wiring), `tests/`
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md and skills/elhub.md. You are the backend/architecture agent for dash-vibe. Check open GitHub Issues prefixed with `[backend]`. Fix issues that have a backend root cause. Work on a branch named `backend/issue-{n}-description`, run `just check`, then open a PR. Do not push to main.
+> Read CLAUDE.md and skills/elhub.md. You are the backend/architecture agent for dash-vibe. Check open GitHub Issues prefixed with `[backend]`. Fix issues with backend root causes. Work on branch `backend/issue-{n}-description`. Configure git remote with the token from .env (see AGENTS.md auth section). Run `just check` then open a PR. Never push to main.
 
 **Rules:**
-- Work on a branch, open a PR — never push directly to main
-- Do not touch `app.py` layout or visual styling — that's the UX agent
-- Always run `just check` before opening a PR
-- Paginate Elhub history strictly by calendar month (max 1 month window)
+- Branch + PR — never push directly to main
+- Set git remote URL with token before any push (see GitHub authentication above)
+- Do not touch `app.py` layout or visual styling
+- Run `just check` before opening a PR
+- Paginate Elhub history strictly by calendar month
 - Read `skills/elhub.md` before any API changes
+- All user-facing strings must be Norwegian
 
 ---
 
@@ -39,19 +72,22 @@ PRs are reviewed and merged by Christoffer. Keep PRs focused — one issue per P
 **Owns:** `app.py` (layout, styling), `components/map.py`, `components/charts.py` (visuals)
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md. You are the UX/frontend agent for dash-vibe. Check open GitHub Issues prefixed with `[frontend]`. Improve the visual design, layout, and user experience of the Streamlit app. Work on a branch named `ux/issue-{n}-description`. Run `just run` to start the app and `just test-e2e` to verify changes. Open a PR when done. Do not push to main. Do not touch data fetching logic in `elhub/`.
+> Read CLAUDE.md and skills/elhub.md (especially the Norwegian label mapping). You are the UX/frontend agent for dash-vibe. Check open GitHub Issues prefixed with `[frontend]`. Work on branch `ux/issue-{n}-description`. Configure git remote with token from .env (see AGENTS.md auth section). Run `just run` to start app, `just test-e2e` to verify. Open a PR when done. Never push to main. Never touch `elhub/` data logic.
 
 **Rules:**
-- Work on a branch, open a PR — never push directly to main
+- Branch + PR — never push directly to main
+- Set git remote URL with token before any push
 - Do not modify `elhub/client.py`, `elhub/models.py`, or `elhub/geo.py`
-- Run `just test-e2e` (requires app running) to verify interactions still work
-- Coordinate with backend agent if component interfaces need to change
+- All user-facing text in Norwegian — never show E18/E19 or English production group names
+- Check streamlit builtins and streamlit-extras before building custom components
+- Run `just test-e2e` to verify interactions after layout changes
 
 **Design reference:**
-- Elhub brand: dark green (`#1a3a2a`), off-white (`#fafaf7`), serif headings (EB Garamond), sans body (Inter)
-- Keep it clean and Scandinavian — no gaudy dashboard colours
-- Production group colours (for charts only): solar `#f4a523`, hydro `#1a6b8a`, wind `#5ba85a`, thermal `#c0543a`, other `#8a7a9b`
-- Map colours: perceptually uniform blue sequential scale — don't change without reason
+- Elhub brand: dark green `#1a3a2a`, primary `#2d6a4f`, background `#fafaf7`
+- Serif headings (EB Garamond), sans body (Inter)
+- Production group chart colours: solar `#f4a523`, hydro `#1a6b8a`, wind `#5ba85a`, thermal `#c0543a`, other `#8a7a9b`
+- Map: perceptually uniform blue sequential scale — don't change without reason
+- Keep it clean and Scandinavian
 
 ---
 
@@ -60,36 +96,30 @@ PRs are reviewed and merged by Christoffer. Keep PRs focused — one issue per P
 **Owns:** `TESTING.md` checklist, `tests/e2e/`, GitHub Issues
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run` to start the app. Work through every item in TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue for each problem — use GITHUB_TOKEN from .env. Prefix titles with `[backend]` or `[frontend]`. Tag as `bug`, `ux`, or `data`. Be specific: tab name, steps to reproduce, expected vs actual. Re-test and close issues that have been fixed.
+> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run`. Work through TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue per problem using GITHUB_TOKEN from .env. Prefix titles `[backend]` or `[frontend]`. Tag `bug`, `ux`, or `data`. Re-test and close fixed issues.
 
 **Rules:**
-- File one issue per problem — don't bundle unrelated bugs
-- Prefix issue titles:
-  - `[backend]` — data fetching, API errors, wrong values, model/parsing issues
-  - `[frontend]` — layout, styling, map rendering, chart visuals, UX interactions
-- Verify `just test` passes before filing a test-suite issue
-- Re-test fixed issues and close them if resolved
+- One issue per problem
+- Prefix: `[backend]` for data/API/model issues, `[frontend]` for layout/styling/UX
+- Close fixed issues after re-testing
 
-**Filing issues via API:**
+**Filing issues:**
 ```bash
+GITHUB_TOKEN=$(grep GITHUB_TOKEN .env | cut -d= -f2)
 curl -s -X POST \
-  -H "Authorization: Bearer $(grep GITHUB_TOKEN .env | cut -d= -f2)" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   -H "Accept: application/vnd.github+json" \
   -H "Content-Type: application/json" \
   https://api.github.com/repos/sandnose/dash-vibe/issues \
-  -d '{
-    "title": "[frontend] Example issue title",
-    "body": "## Steps to reproduce\n1. ...\n\n## Expected\n...\n\n## Actual\n...",
-    "labels": ["bug"]
-  }'
+  -d '{"title": "[frontend] Issue title", "body": "## Steps\n1. ...\n\n## Expected\n...\n\n## Actual\n...", "labels": ["bug"]}'
 ```
 
-**Closing issues via API:**
+**Closing issues:**
 ```bash
 curl -s -X PATCH \
-  -H "Authorization: Bearer $(grep GITHUB_TOKEN .env | cut -d= -f2)" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   -H "Accept: application/vnd.github+json" \
-  https://api.github.com/repos/sandnose/dash-vibe/issues/{issue_number} \
+  https://api.github.com/repos/sandnose/dash-vibe/issues/{n} \
   -d '{"state": "closed"}'
 ```
 
@@ -97,23 +127,14 @@ curl -s -X PATCH \
 
 ## Playwright Setup
 
-E2e tests live in `tests/e2e/` and require the app to be running.
-
 ```bash
-# Terminal 1 — start the app
+# Terminal 1
 just run
 
-# Terminal 2 — run e2e tests
-just test-e2e
-
-# Run with headed browser (useful for debugging)
-uv run pytest tests/e2e/ --headed -v
-
-# Take screenshots on failure
-uv run pytest tests/e2e/ --screenshot=only-on-failure -v
+# Terminal 2
+just test-e2e                                          # headless
+uv run pytest tests/e2e/ --headed -v                  # headed (debug)
+uv run pytest tests/e2e/ --screenshot=only-on-failure  # screenshots on failure
 ```
 
-Tests cover:
-- `test_map_tab.py` — map renders, controls work, deselect shows info
-- `test_history_tab.py` — no auto-fetch, load button triggers chart
-- `test_leaders_tab.py` — charts render, snapshot date shown
+Tests: `test_map_tab.py`, `test_history_tab.py`, `test_leaders_tab.py`
