@@ -1,8 +1,9 @@
 # dash-vibe task runner
 
-# Install dependencies
+# Install all dependencies including dev
 init:
-    uv pip install -e .
+    uv venv --python 3.11
+    uv pip install -e ".[dev]"
 
 # Run the app locally
 run:
@@ -13,8 +14,19 @@ dev: init run
 
 # Format code
 fmt:
-    ruff format .
+    uv run ruff format .
 
 # Lint
 lint:
-    ruff check .
+    uv run ruff check .
+
+# Lint and auto-fix what's safe
+fix:
+    uv run ruff check --fix .
+
+# Run tests
+test:
+    uv run pytest -v
+
+# Full check: lint + test
+check: lint test
