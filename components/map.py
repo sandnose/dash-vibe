@@ -1,26 +1,18 @@
 from __future__ import annotations
 
-import branca
 import folium
-import numpy as np
 import pandas as pd
 from branca.colormap import LinearColormap
 
 
 def _build_colormap(max_val: float) -> LinearColormap:
-    """
-    Perceptually uniform blue-green sequential colormap.
-    Avoids yellow/green which clashes with dashboard theme.
-    """
+    """Perceptually uniform blue sequential colormap with 5 clean ticks."""
     colormap = LinearColormap(
         colors=["#eaf4fb", "#9ecae1", "#3182bd", "#08519c", "#08306b"],
         vmin=0,
         vmax=max_val,
         caption="Installed capacity (kW)",
     )
-    # Reduce to 5 clean ticks to avoid overlap
-    ticks = np.linspace(0, max_val, 5)
-    colormap.tick_labels = [f"{int(v):,}" for v in ticks]
     return colormap
 
 
@@ -53,59 +45,55 @@ def build_choropleth(
         .reset_index()
     )
 
-    # Base layer without labels, so our overlay doesn't obscure city names
-    m = folium.Map(
-        location=[65, 15],
-        zoom_start=5,
-        tiles="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
-        attr="&copy; OpenStreetMap &copy; CARTO",
+    # CartoDB positron — labels render above tile, so our fill won't obscure them
+    m = folium.Map(location=[65, 15], zoom_start=5, tiles="CartoDB positron")
+
+    if agg.empty:
+        return m
+
+    max_val = float(agg["installed_capacity_kw"].max())
+    colormap = _build_colormap(max_val)
+
+    capacity_lookup: dict[str, float] = dict(
+        zip(agg["municipality_id"], agg["installed_capacity_kw"], strict=False)
     )
 
-    if not agg.empty:
-        max_val = float(agg["installed_capacity_kw"].max())
-        colormap = _build_colormap(max_val)
-
-        capacity_lookup: dict[str, float] = dict(
-            zip(agg["municipality_id"], agg["installed_capacity_kw"], strict=False)
-        )
-
-        def style_fn(feature: dict) -> dict:
-            muni_id: str = feature["properties"].get("kommunenummer", "")
-            val: float = capacity_lookup.get(muni_id, 0.0)
-            if val == 0.0:
-                return {
-                    "fillColor": "#e8e8e8",
-                    "color": "#cccccc",
-                    "weight": 0.5,
-                    "fillOpacity": 0.4,
-                }
+    def style_fn(feature: dict) -> dict:
+        muni_id: str = feature["properties"].get("kommunenummer", "")
+        val: float = capacity_lookup.get(muni_id, 0.0)
+        if val == 0.0:
             return {
-                "fillColor": colormap(val),
-                "color": "#ffffff",
+                "fillColor": "#e8e8e8",
+                "color": "#cccccc",
                 "weight": 0.5,
-                "fillOpacity": 0.75,
+                "fillOpacity": 0.4,
             }
+        return {
+            "fillColor": colormap(val),
+            "color": "#ffffff",
+            "weight": 0.5,
+            "fillOpacity": 0.75,
+        }
 
-        folium.GeoJson(
-            geojson,
-            style_function=style_fn,
-            highlight_function=lambda _: {},  # disable click/hover highlight box
-            tooltip=folium.GeoJsonTooltip(
-                fields=["kommunenummer", "kommunenavn"],
-                aliases=["ID:", "Municipality:"],
-                localize=True,
-            ),
-        ).add_to(m)
+    def highlight_fn(_feature: dict) -> dict:
+        # Border-only highlight on hover — no fill change, no bounding box
+        return {
+            "weight": 2,
+            "color": "#333333",
+            "fillOpacity": 0.85,
+        }
 
-        colormap.add_to(m)
-
-    # Label layer rendered on top so city names are always visible
-    folium.TileLayer(
-        tiles="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png",
-        attr="&copy; OpenStreetMap &copy; CARTO",
-        overlay=True,
-        name="Labels",
-        control=False,
+    folium.GeoJson(
+        geojson,
+        style_function=style_fn,
+        highlight_function=highlight_fn,
+        zoom_on_click=False,  # prevents the bounding-box zoom on click
+        tooltip=folium.GeoJsonTooltip(
+            fields=["kommunenummer", "kommunenavn"],
+            aliases=["ID:", "Municipality:"],
+            localize=True,
+        ),
     ).add_to(m)
 
+    colormap.add_to(m)
     return m
