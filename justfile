@@ -7,7 +7,7 @@ init:
 
 # Run the app locally
 run:
-    streamlit run app.py
+    uv run streamlit run app.py
 
 # Install + run in one go
 dev: init run
