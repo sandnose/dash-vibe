@@ -45,8 +45,8 @@ def build_choropleth(
     )
 
     m = folium.Map(
-        location=[65, 15],
-        zoom_start=5,
+        location=[68, 15],
+        zoom_start=4,
         tiles="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
         attr="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> &copy; <a href='https://carto.com/'>CARTO</a>",
     )

@@ -83,7 +83,7 @@ with tab_map:
             st.info("Select at least one production source.")
         else:
             m = build_choropleth(snapshot_df, geojson, selected_groups, metering_code)
-            st_folium(m, use_container_width=True, height=620, returned_objects=[])
+            st_folium(m, use_container_width=True, height=850, returned_objects=[])
 
 # ════════════════════════════════════════════════════════════════════════════════
 # TAB 2 — HISTORY (lazy: only fetches when tab is active)
