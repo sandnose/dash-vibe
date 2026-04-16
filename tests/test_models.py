@@ -47,7 +47,8 @@ def test_elhub_response_parses() -> None:
     response = ElhubResponse.model_validate(SAMPLE_RESPONSE)
     assert len(response.data) == 1
     assert response.data[0].attributes.municipalityNumber == "0301"
-    assert len(response.data[0].attributes.installedCapacityPerMeteringPointTypeGroupMunicipalityDaily) == 2
+    records = response.data[0].attributes.installedCapacityPerMeteringPointTypeGroupMunicipalityDaily
+    assert len(records) == 2
 
 
 def test_response_to_df_shape() -> None:
