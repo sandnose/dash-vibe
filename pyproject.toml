@@ -27,7 +27,7 @@ include = ["elhub*", "components*"]
 
 [tool.ruff]
 target-version = "py311"
-line-length = 100
+line-length = 105
 
 [tool.ruff.lint]
 select = [
@@ -40,7 +40,7 @@ select = [
     "ANN",  # flake8-annotations (typehints)
     "RUF",  # ruff-specific
 ]
-ignore = []
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]

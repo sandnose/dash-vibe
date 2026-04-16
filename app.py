@@ -3,6 +3,9 @@ from __future__ import annotations
 import streamlit as st
 from streamlit_folium import st_folium
 
+from components.analyse import render_analyse_tab
+from components.charts import history_chart, leaders_chart
+from components.map import build_choropleth
 from elhub.client import fetch_history, fetch_latest_snapshot
 from elhub.geo import load_kommuner_geojson
 from elhub.labels import (
@@ -10,8 +13,6 @@ from elhub.labels import (
     label_metering_type,
     label_production_group,
 )
-from components.charts import history_chart, leaders_chart
-from components.map import build_choropleth
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -68,12 +69,14 @@ all_municipalities = (
     .drop_duplicates()
     .sort_values("municipality_name")
 )
+all_price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
 
 # ── Tabs ───────────────────────────────────────────────────────────────────────
-tab_map, tab_history, tab_leaders, tab_explain = st.tabs([
+tab_map, tab_history, tab_leaders, tab_analyse, tab_explain = st.tabs([
     "🗺️ Kart",
     "📈 Historikk",
     "🏆 Topp kommuner",
+    "🔬 Analyse",
     "📖 Forklaring",
 ])
 
@@ -160,13 +163,33 @@ with tab_leaders:
             )
 
 # ════════════════════════════════════════════════════════════════════════════════
-# TAB 4 — FORKLARING
+# TAB 4 — ANALYSE
+# ════════════════════════════════════════════════════════════════════════════════
+with tab_analyse:
+    st.markdown("### Analyser kraft- og forbruksdata")
+
+    geo_level = st.radio(
+        "Geografisk nivå",
+        options=["price-areas", "municipalities"],
+        format_func=lambda x: {"price-areas": "Prisområde", "municipalities": "Kommune"}[x],
+        horizontal=True,
+    )
+
+    st.divider()
+
+    render_analyse_tab(
+        geo_level=geo_level,
+        all_price_areas=all_price_areas,
+        all_municipalities=all_municipalities,
+    )
+
+# ════════════════════════════════════════════════════════════════════════════════
+# TAB 5 — FORKLARING
 # ════════════════════════════════════════════════════════════════════════════════
 with tab_explain:
     st.markdown("## Hva viser dashbordet?")
     st.markdown("""
-Dette dashbordet visualiserer **installert kapasitet** for kraftproduksjon i norske kommuner,
-basert på åpne data fra Elhub — Norges datahub for elektrisitetsmålinger.
+Dette dashbordet visualiserer åpne data fra Elhub — Norges datahub for elektrisitetsmålinger.
     """)
 
     st.divider()
@@ -196,33 +219,45 @@ Tenk på det som motorkraften i en bil: du har 200 hk, men kjører ikke alltid f
 
     with st.expander("📍 Målerpunktkategorier"):
         st.markdown("""
-Elhub skiller mellom to typer produksjonsmålepunkter:
-
-**Produksjon** *(tidligere kalt E18)*
+**Produksjon** *(tidligere E18)*
 Store, nettilkoblede kraftanlegg som leverer strøm direkte til nettet.
 Typisk vannkraft, vindparker og større solcelleinstallasjoner.
 
-**Plusspunkt** *(tidligere kalt E19)*
+**Plusspunkt** *(tidligere E19)*
 Mindre anlegg hos forbrukere som også produserer strøm — såkalte *prosumenter*.
 Typisk solcellepaneler på hus og hytter.
         """)
 
     with st.expander("🗺️ Geografiske nivåer"):
         st.markdown("""
-Dataene kan aggregeres på ulike geografiske nivåer:
-
 - **Kommune** — Norges 356 kommuner. Brukes i kartvisningen.
 - **Prisområde** — Norge er delt i 5 prisområder (NO1–NO5) basert på strømnettets kapasitet.
+  Prisområdene bestemmer strømprisen i ulike deler av landet.
 - **Grunnkrets** — Statistisk undernivå av kommunen. Mer detaljert, men vanskeligere å tolke.
+
+Forbruksgruppene er grovere på kommunenivå (industri, privat, næringsliv) enn på prisområdenivå
+(husholdning, hytte, primær-, sekundær- og tertiærnæring). Dette er Elhubs valg, ikke dashbordets.
+        """)
+
+    with st.expander("🔬 Kapasitetsfaktor og teoretisk maks"):
+        st.markdown("""
+I analysevisningen kan du slå på **teoretisk maks** for produksjonsdata.
+
+Dette beregner hvor mye strøm som *kunne* vært produsert hvis alle kraftanlegg gikk for fullt
+i hele perioden. Formelen er enkel: installert kapasitet (kW) × antall timer = teoretisk maks (kWh).
+
+Forholdet mellom faktisk produksjon og teoretisk maks kalles **kapasitetsfaktor**.
+- Vannkraft: typisk 40–60 %
+- Vindkraft: typisk 25–45 %
+- Solkraft: typisk 10–20 % i Norge
         """)
 
     with st.expander("📅 Datoer og oppdatering"):
         st.markdown("""
 - Dataene oppdateres daglig av Elhub.
 - Kartet viser alltid **siste tilgjengelige dag** (typisk 1–3 dager forsinket).
-- Historikkvisningen henter én måneds data om gangen på grunn av API-begrensninger.
-- Installert kapasitet endrer seg sakte — store hopp skyldes vanligvis nye anlegg
-  som tas i bruk eller gamle som stenges.
+- Historikk og analyse henter én måneds data om gangen på grunn av API-begrensninger.
+- Installert kapasitet endrer seg sakte — store hopp skyldes vanligvis nye anlegg eller nedleggelser.
         """)
 
     st.divider()
