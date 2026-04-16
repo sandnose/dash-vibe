@@ -6,14 +6,13 @@ from branca.colormap import LinearColormap
 
 
 def _build_colormap(max_val: float) -> LinearColormap:
-    """Perceptually uniform blue sequential colormap with 5 clean ticks."""
-    colormap = LinearColormap(
+    """Perceptually uniform blue sequential colormap."""
+    return LinearColormap(
         colors=["#eaf4fb", "#9ecae1", "#3182bd", "#08519c", "#08306b"],
         vmin=0,
         vmax=max_val,
         caption="Installed capacity (kW)",
     )
-    return colormap
 
 
 def build_choropleth(
@@ -45,8 +44,11 @@ def build_choropleth(
         .reset_index()
     )
 
-    # CartoDB positron — labels render above tile, so our fill won't obscure them
-    m = folium.Map(location=[65, 15], zoom_start=5, tiles="CartoDB positron")
+    m = folium.Map(
+        location=[65, 15],
+        zoom_start=5,
+        tiles="CartoDB positron (no labels)",
+    )
 
     if agg.empty:
         return m
@@ -76,18 +78,13 @@ def build_choropleth(
         }
 
     def highlight_fn(_feature: dict) -> dict:
-        # Border-only highlight on hover — no fill change, no bounding box
-        return {
-            "weight": 2,
-            "color": "#333333",
-            "fillOpacity": 0.85,
-        }
+        return {"weight": 2, "color": "#333333", "fillOpacity": 0.85}
 
     folium.GeoJson(
         geojson,
         style_function=style_fn,
         highlight_function=highlight_fn,
-        zoom_on_click=False,  # prevents the bounding-box zoom on click
+        zoom_on_click=False,
         tooltip=folium.GeoJsonTooltip(
             fields=["kommunenummer", "kommunenavn"],
             aliases=["ID:", "Municipality:"],

@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 import streamlit as st
 from streamlit_folium import st_folium
-import pandas as pd
 
-from elhub.client import fetch_latest_snapshot, fetch_history
+from elhub.client import fetch_history, fetch_latest_snapshot
 from elhub.geo import load_kommuner_geojson
-from components.map import build_choropleth
 from components.charts import history_chart, leaders_chart
+from components.map import build_choropleth
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -14,21 +15,14 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── Theme injection (Elhub-inspired) ───────────────────────────────────────────
+# ── Theme injection ────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     h1, h2, h3 { font-family: 'EB Garamond', serif; color: #1a3a2a; }
     .stTabs [data-baseweb="tab"] { font-family: 'Inter', sans-serif; }
     .stTabs [aria-selected="true"] { color: #1a3a2a; border-bottom-color: #1a3a2a; }
-    .metric-card {
-        background: #f5f5f0;
-        border-radius: 8px;
-        padding: 1rem 1.25rem;
-        border-left: 4px solid #2d6a4f;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -36,7 +30,7 @@ st.markdown("""
 st.title("⚡ Norwegian Electricity Dashboard")
 st.caption("Data sourced from [Elhub](https://api.elhub.no) · Open data")
 
-# ── Load data ──────────────────────────────────────────────────────────────────
+# ── Load shared data (always needed) ──────────────────────────────────────────
 with st.spinner("Loading electricity data…"):
     snapshot_df = fetch_latest_snapshot()
     geojson = load_kommuner_geojson()
@@ -92,7 +86,7 @@ with tab_map:
             st_folium(m, use_container_width=True, height=620, returned_objects=[])
 
 # ════════════════════════════════════════════════════════════════════════════════
-# TAB 2 — HISTORY
+# TAB 2 — HISTORY (lazy: only fetches when tab is active)
 # ════════════════════════════════════════════════════════════════════════════════
 with tab_history:
     col_sel, col_chart = st.columns([1, 3])
@@ -108,17 +102,18 @@ with tab_history:
 
         months_back = st.slider("Months of history", min_value=1, max_value=24, value=12)
 
-    with col_chart:
-        with st.spinner(f"Loading history for {selected_name}…"):
-            hist_df = fetch_history(selected_id, months=months_back)
+        load_history = st.button("Load history", type="primary")
 
-        if hist_df.empty:
-            st.info("No historical data found for this municipality.")
+    with col_chart:
+        if load_history:
+            with st.spinner(f"Loading history for {selected_name}…"):
+                hist_df = fetch_history(selected_id, months=months_back)
+            if hist_df.empty:
+                st.info("No historical data found for this municipality.")
+            else:
+                st.plotly_chart(history_chart(hist_df, selected_name), use_container_width=True)
         else:
-            st.plotly_chart(
-                history_chart(hist_df, selected_name),
-                use_container_width=True,
-            )
+            st.info("Select a municipality and click **Load history**.")
 
 # ════════════════════════════════════════════════════════════════════════════════
 # TAB 3 — LEADERS

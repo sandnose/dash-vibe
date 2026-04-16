@@ -1,14 +1,15 @@
-from pydantic import BaseModel, field_validator
-from typing import Optional
+from __future__ import annotations
+
 import pandas as pd
+from pydantic import BaseModel
 
 
 class CapacityRecord(BaseModel):
     usageDateId: int
     municipalityId: str
-    meteringPointTypeCode: str  # E18 or E19
-    productionGroup: str        # solar, hydro, wind, thermal, other
-    installedCapacity: float
+    meteringPointTypeCode: str  # E18 = grid-connected, E19 = local/prosumer
+    productionGroup: str        # solar | hydro | wind | thermal | other
+    installedCapacity: float    # kW
     lastUpdatedTime: str
 
 
@@ -25,21 +26,26 @@ class Municipality(BaseModel):
     attributes: MunicipalityAttributes
 
 
-class EhubResponse(BaseModel):
+class ElhubResponse(BaseModel):
     data: list[Municipality]
 
 
-def response_to_df(response: EhubResponse) -> pd.DataFrame:
-    rows = []
-    for m in response.data:
-        a = m.attributes
-        for r in a.installedCapacityPerMeteringPointTypeGroupMunicipalityDaily:
-            rows.append({
-                "municipality_id": a.municipalityNumber,
-                "municipality_name": a.nameNo,
-                "usage_date": pd.to_datetime(str(r.usageDateId), format="%Y%m%d"),
-                "metering_type": r.meteringPointTypeCode,
-                "production_group": r.productionGroup,
-                "installed_capacity_kw": r.installedCapacity,
-            })
+def response_to_df(response: ElhubResponse) -> pd.DataFrame:
+    """Flatten an ElhubResponse into a tidy DataFrame."""
+    rows: list[dict] = []
+    for municipality in response.data:
+        attrs = municipality.attributes
+        for record in attrs.installedCapacityPerMeteringPointTypeGroupMunicipalityDaily:
+            rows.append(
+                {
+                    "municipality_id": attrs.municipalityNumber,
+                    "municipality_name": attrs.nameNo,
+                    "usage_date": pd.to_datetime(
+                        str(record.usageDateId), format="%Y%m%d"
+                    ),
+                    "metering_type": record.meteringPointTypeCode,
+                    "production_group": record.productionGroup,
+                    "installed_capacity_kw": record.installedCapacity,
+                }
+            )
     return pd.DataFrame(rows)
