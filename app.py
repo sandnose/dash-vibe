@@ -22,13 +22,53 @@ st.set_page_config(
 )
 
 # ── Theme ──────────────────────────────────────────────────────────────────────
+# Design reference: DESIGN.md
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+
+    /* Brand background */
+    .stApp { background-color: #fafaf7; }
+
+    /* Typography */
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     h1, h2, h3 { font-family: 'EB Garamond', serif; color: #1a3a2a; }
-    .stTabs [data-baseweb="tab"] { font-family: 'Inter', sans-serif; }
-    .stTabs [aria-selected="true"] { color: #1a3a2a; border-bottom-color: #1a3a2a; }
+    h1 { font-size: 1.9rem !important; font-weight: 400 !important; letter-spacing: -0.01em; }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] { border-bottom: 1px solid #ddd9d0; gap: 0; }
+    .stTabs [data-baseweb="tab"] {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #999;
+        padding: 0.6rem 1.5rem;
+        background: transparent;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #1a3a2a !important;
+        border-bottom: 2px solid #1a3a2a !important;
+        font-weight: 600;
+    }
+
+    /* Dividers */
+    [data-testid="stDivider"] { border-color: #ddd9d0; }
+
+    /* Primary button — brand green */
+    .stButton > button[kind="primary"] {
+        background-color: #1a3a2a !important;
+        border-color: #1a3a2a !important;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #2d6a4f !important;
+        border-color: #2d6a4f !important;
+    }
+
+    /* Hide Streamlit decoration bar */
+    [data-testid="stDecoration"] { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -87,8 +127,13 @@ with tab_map:
     col_controls, col_map = st.columns([1, 3])
 
     with col_controls:
-        st.markdown(f"**Data per:** {latest_date.strftime('%d. %b %Y')}")
-        st.divider()
+        st.markdown(
+            f'<div style="margin-bottom:1.25rem">'
+            f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:3px">Data per</div>'
+            f'<div style="font-family:\'EB Garamond\',serif;font-size:1.1rem;color:#1a3a2a">{latest_date.strftime("%d. %b %Y")}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
         selected_groups = st.multiselect(
             "Produksjonstype",
@@ -147,8 +192,13 @@ with tab_history:
 # TAB 3 — TOPP KOMMUNER
 # ════════════════════════════════════════════════════════════════════════════════
 with tab_leaders:
-    st.markdown(f"**Data per:** {latest_date.strftime('%d. %b %Y')}")
-    st.divider()
+    st.markdown(
+        f'<div style="margin-bottom:1.25rem">'
+        f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:3px">Data per</div>'
+        f'<div style="font-family:\'EB Garamond\',serif;font-size:1.1rem;color:#1a3a2a">{latest_date.strftime("%d. %b %Y")}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
     top_n = st.slider("Antall kommuner", min_value=5, max_value=20, value=10)
 
