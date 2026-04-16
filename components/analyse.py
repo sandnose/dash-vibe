@@ -23,6 +23,7 @@ from elhub.datasets import (
     PRODUCTION_PER_TYPE_MUNICIPALITY_HOUR,
     DatasetConfig,
 )
+from components.theme import CHART_LAYOUT
 from elhub.labels import (
     ANALYSE_TYPE_LABELS,
     label_consumption_group,
@@ -46,14 +47,6 @@ CONSUMPTION_COLORS: dict[str, str] = {
     "industry": "#1b4332",
     "private": "#52b788",
     "business": "#40916c",
-}
-
-_LAYOUT: dict = {
-    "plot_bgcolor": "white",
-    "paper_bgcolor": "white",
-    "font_family": "serif",
-    "title_font_size": 16,
-    "hovermode": "x unified",
 }
 
 # Maps geo level to available analyse types
@@ -220,7 +213,7 @@ def _production_chart(
         labels={"time": "", value_col: f"Produksjon ({unit})", "gruppe": "Produksjonstype"},
         title=title,
     )
-    fig.update_layout(**_LAYOUT, legend_title_text="", barmode="stack")
+    fig.update_layout(**CHART_LAYOUT, legend_title_text="", barmode="stack")
     return fig
 
 
@@ -271,7 +264,7 @@ def _consumption_chart(
         labels={"time": "", value_col: f"Forbruk ({unit})", "gruppe": "Forbruksgruppe"},
         title=title,
     )
-    fig.update_layout(**_LAYOUT, legend_title_text="", barmode="stack")
+    fig.update_layout(**CHART_LAYOUT, legend_title_text="", barmode="stack")
     return fig
 
 
@@ -288,7 +281,7 @@ def _exchange_chart(df: pd.DataFrame, unit: str, title: str) -> go.Figure:
             name="Eksport", marker_color="#c0543a",
         ))
     fig.update_layout(
-        **_LAYOUT,
+        **CHART_LAYOUT,
         title=title,
         barmode="relative",
         yaxis_title=f"Mengde ({unit})",

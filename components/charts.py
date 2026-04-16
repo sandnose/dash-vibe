@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from components.theme import CHART_LAYOUT
 from elhub.labels import label_production_group
 
 PRODUCTION_COLORS: dict[str, str] = {
@@ -13,18 +14,6 @@ PRODUCTION_COLORS: dict[str, str] = {
     "thermal":   "#c0543a",
     "other":     "#8a7a9b",
     "remainder": "#b0b0b0",  # Elhub privacy bucket — totals correct but group too small to disclose
-}
-
-_LAYOUT_DEFAULTS: dict = {
-    "plot_bgcolor": "#fafaf7",
-    "paper_bgcolor": "#fafaf7",
-    "font_family": "Inter, sans-serif",
-    "font_color": "#333333",
-    "title_font_family": "EB Garamond, serif",
-    "title_font_size": 16,
-    "title_font_color": "#1a3a2a",
-    "hovermode": "x unified",
-    "margin": {"l": 0, "r": 16, "t": 48, "b": 0},
 }
 
 
@@ -58,7 +47,7 @@ def history_chart(df: pd.DataFrame, municipality_name: str) -> go.Figure:
         },
         title=f"Installert kapasitet over tid — {municipality_name}",
     )
-    fig.update_layout(**_LAYOUT_DEFAULTS, legend_title_text="")
+    fig.update_layout(**CHART_LAYOUT, legend_title_text="")
     return fig
 
 
@@ -92,5 +81,5 @@ def leaders_chart(df: pd.DataFrame, group: str, top_n: int = 10) -> go.Figure:
         },
         title=f"Topp {top_n} kommuner — {label_production_group(group)}",
     )
-    fig.update_layout(**_LAYOUT_DEFAULTS, showlegend=False)
+    fig.update_layout(**CHART_LAYOUT, showlegend=False)
     return fig
