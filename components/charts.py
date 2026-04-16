@@ -5,19 +5,24 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 PRODUCTION_COLORS: dict[str, str] = {
-    "solar":   "#f4a523",
-    "hydro":   "#1a6b8a",
-    "wind":    "#5ba85a",
-    "thermal": "#c0543a",
-    "other":   "#8a7a9b",
+    "solar":     "#f4a523",
+    "hydro":     "#1a6b8a",
+    "wind":      "#5ba85a",
+    "thermal":   "#c0543a",
+    "other":     "#8a7a9b",
+    "remainder": "#b0b0b0",  # Elhub privacy bucket — totals correct but group too small to disclose
 }
 
 _LAYOUT_DEFAULTS: dict = {
-    "plot_bgcolor": "white",
-    "paper_bgcolor": "white",
-    "font_family": "serif",
+    "plot_bgcolor": "#fafaf7",
+    "paper_bgcolor": "#fafaf7",
+    "font_family": "Inter, sans-serif",
+    "font_color": "#333333",
+    "title_font_family": "EB Garamond, serif",
     "title_font_size": 16,
+    "title_font_color": "#1a3a2a",
     "hovermode": "x unified",
+    "margin": {"l": 0, "r": 16, "t": 48, "b": 0},
 }
 
 
