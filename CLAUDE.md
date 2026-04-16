@@ -8,12 +8,17 @@ Norway's electricity data hub. Built with Streamlit + Folium + Plotly.
 **Owner:** sandnose (Christoffer)
 
 ## Current state (as of 2026-04-16)
-- ✅ Map tab — choropleth of installed capacity per municipality, working
-- ✅ History tab — monthly line chart per municipality, lazy-loaded with button
+- ✅ Map tab — choropleth of installed capacity per municipality
+- ✅ History tab — monthly line chart per municipality, lazy-loaded
 - ✅ Leaders tab — top N municipalities per production group
-- ✅ Test suite — 14 passing tests (pytest)
+- ✅ Analyse tab — production, consumption, exchange, loss with time aggregation and unit scaling
+- ✅ Forklaring tab — Norwegian explanations of all concepts
+- ✅ Dataset registry — `elhub/datasets.py` drives all client and UI logic
+- ✅ Norwegian UI throughout — labels via `elhub/labels.py`
+- ✅ Central theme — `components/theme.py` + `DESIGN.md`
+- ✅ Test suite — 27 passing tests (pytest)
 - ✅ Linting — ruff configured
-- 🔧 Active issues being tracked on GitHub Issues
+- 🔧 Active issues on GitHub Issues
 
 ## Stack
 | Layer | Choice |
@@ -64,6 +69,12 @@ just check   # lint + test
 - **API constraint:** max 1 month per request — history tab paginates month by month
 - **GeoJSON join key:** `kommunenummer` (4-digit string, zero-padded)
 - **No auth required** for Elhub open datasets
+
+## Design system
+- **Single source of truth:** `DESIGN.md` — read before touching anything visual
+- **Chart layout:** always import `CHART_LAYOUT` from `components/theme.py`, never define locally
+- **Norwegian labels:** always use functions from `elhub/labels.py`, never hardcode translations
+- **Dataset logic:** always use `elhub/datasets.py` registry, never hardcode dataset IDs in app logic
 
 ## Architecture decisions (context for why things are the way they are)
 - History tab uses a **Load button** (not auto-fetch) to avoid triggering 12 API calls on tab switch
