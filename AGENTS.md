@@ -49,10 +49,13 @@
 **Owns:** `TESTING.md` checklist, `tests/e2e/`, GitHub Issues
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run` to start the app. Work through every item in TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue for each problem you find — use the GITHUB_TOKEN from .env. Tag issues as `bug`, `ux`, or `data`. Be specific: tab name, steps to reproduce, expected vs actual.
+> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run` to start the app. Work through every item in TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue for each problem you find — use the GITHUB_TOKEN from .env. Prefix issue titles with `[backend]` or `[frontend]` so the right agent knows it's theirs. Tag issues as `bug`, `ux`, or `data`. Be specific: tab name, steps to reproduce, expected vs actual.
 
 **Rules:**
 - File one issue per problem — don't bundle unrelated bugs
+- Prefix issue titles with `[backend]` or `[frontend]` so the right agent picks it up
+  - `[backend]` — data fetching, API errors, wrong values, model/parsing issues
+  - `[frontend]` — layout, styling, map rendering, chart visuals, UX interactions
 - Include the relevant code snippet or URL if applicable
 - Verify `just test` passes before filing a test-suite issue
 - Re-test fixed issues and close them if resolved
