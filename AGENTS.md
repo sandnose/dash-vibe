@@ -137,12 +137,29 @@ Never build a custom Plotly chart when `px` can do the same thing in one call.
 **Owns:** `TESTING.md` checklist, `tests/e2e/`, GitHub Issues
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run`. Work through TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue per problem using GITHUB_TOKEN from .env. Prefix titles `[backend]` or `[frontend]`. Tag `bug`, `ux`, or `data`. Re-test and close fixed issues.
+> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run`. Work through TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue per problem using GITHUB_TOKEN from .env. Prefix titles `[backend]` or `[frontend]`. Tag `bug`, `ux`, or `data`. Re-test open PRs and merge them if they pass. Never fix code yourself.
 
 **Rules:**
+- **Never edit or fix code** — your only output is GitHub Issues and PR merges
 - One issue per problem
 - Prefix: `[backend]` for data/API/model issues, `[frontend]` for layout/styling/UX
-- Close fixed issues after re-testing
+- When a PR exists for an open issue: checkout the branch, test the changes, merge if clean, close the issue
+- If a PR introduces new problems: file a new issue and request changes on the PR — do not merge
+- Re-test issues marked as fixed on main — close if resolved, reopen if not
+
+**Testing a PR branch before merging:**
+```bash
+# Fetch and checkout the PR branch (read-only test — never commit to it)
+git fetch origin
+git checkout origin/backend/issue-{n}-description --detach
+
+# Run the app and test
+just run   # in another terminal
+just test-e2e
+
+# Return to main when done
+git checkout main
+```
 
 **Filing issues:**
 ```bash
@@ -153,6 +170,16 @@ curl -s -X POST \
   -H "Content-Type: application/json" \
   https://api.github.com/repos/sandnose/dash-vibe/issues \
   -d '{"title": "[frontend] Issue title", "body": "## Steps\n1. ...\n\n## Expected\n...\n\n## Actual\n...", "labels": ["bug"]}'
+```
+
+**Merging a PR (after testing passes):**
+```bash
+curl -s -X PUT   -H "Authorization: Bearer ${GITHUB_TOKEN}"   -H "Accept: application/vnd.github+json"   -H "Content-Type: application/json"   https://api.github.com/repos/sandnose/dash-vibe/pulls/{pr_number}/merge   -d '{"merge_method": "squash", "commit_title": "Tested and merged by test agent"}'
+```
+
+**Requesting changes on a PR (testing found issues):**
+```bash
+curl -s -X POST   -H "Authorization: Bearer ${GITHUB_TOKEN}"   -H "Accept: application/vnd.github+json"   -H "Content-Type: application/json"   https://api.github.com/repos/sandnose/dash-vibe/pulls/{pr_number}/reviews   -d '{"event": "REQUEST_CHANGES", "body": "Testing found issues — see linked GitHub Issue."}'
 ```
 
 **Closing issues:**
