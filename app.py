@@ -271,8 +271,20 @@ if mode == "capacity":
             if not selected_groups:
                 st.info("Velg minst én produksjonstype.")
             else:
-                m = build_choropleth(snapshot_df, geojson, selected_groups, metering_raw)
-                st_folium(m, use_container_width=True, height=600, returned_objects=[])
+                m = build_choropleth(
+                    snapshot_df, geojson, selected_groups, metering_raw,
+                    center=st.session_state.get("map_center", (65, 15)),
+                    zoom=st.session_state.get("map_zoom", 4),
+                )
+                map_state = st_folium(
+                    m, use_container_width=True, height=600,
+                    returned_objects=["center", "zoom"],
+                )
+                if map_state.get("center"):
+                    c = map_state["center"]
+                    st.session_state["map_center"] = (c["lat"], c["lng"])
+                if map_state.get("zoom"):
+                    st.session_state["map_zoom"] = map_state["zoom"]
 
     # ── Historikk ─────────────────────────────────────────────────────────────
     with tab_history:
