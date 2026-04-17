@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from components.theme import CHART_LAYOUT
 from elhub.aggregator import (
     AGGREGATION_LABELS,
     aggregate_time,
@@ -23,7 +24,6 @@ from elhub.datasets import (
     PRODUCTION_PER_TYPE_MUNICIPALITY_HOUR,
     DatasetConfig,
 )
-from components.theme import CHART_LAYOUT
 from elhub.labels import (
     ANALYSE_TYPE_LABELS,
     label_consumption_group,
@@ -302,5 +302,5 @@ def _loss_chart(df: pd.DataFrame, unit: str, title: str) -> go.Figure:
         title=title,
         color_discrete_sequence=["#8a7a9b"],
     )
-    fig.update_layout(**_LAYOUT)
+    fig.update_layout(**CHART_LAYOUT)
     return fig
