@@ -132,19 +132,19 @@ with st.sidebar:
         )
 
     # ── Sidebar footer ─────────────────────────────────────────────────────────
-    st.write("")
-    st.write("")
+    st.markdown("<div style='flex:1;min-height:2rem'></div>", unsafe_allow_html=True)
     st.divider()
     st.caption(f"Siste tilgjengelige data: {latest_date.strftime('%d. %b %Y')}")
     st.caption(
         "Kraftdata: [Elhub Energy Data API](https://api.elhub.no)  \n"
-        "Kart: [robhop/fylker-og-kommuner](https://github.com/robhop/fylker-og-kommuner) (Kartverket, CC BY 4.0)  \n"
+        "Kart: [robhop/fylker-og-kommuner](https://github.com/robhop/fylker-og-kommuner)  \n"
+        "(Kartverket, CC BY 4.0)  \n"
         "[Kildekode](https://github.com/sandnose/dash-vibe)"
     )
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
-def _snapshot_label(d) -> str:
+def _snapshot_label(d: object) -> str:
     return (
         f'<div style="margin-bottom:1.25rem">'
         f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;'
