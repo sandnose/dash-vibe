@@ -214,6 +214,7 @@ def _production_chart(
         title=title,
     )
     fig.update_layout(**CHART_LAYOUT, legend_title_text="", barmode="stack")
+    fig.update_xaxes(hoverformat="%d.%m.%Y")
     fig.update_traces(hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>")
     return fig
 
@@ -266,6 +267,7 @@ def _consumption_chart(
         title=title,
     )
     fig.update_layout(**CHART_LAYOUT, legend_title_text="", barmode="stack")
+    fig.update_xaxes(hoverformat="%d.%m.%Y")
     fig.update_traces(hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>")
     return fig
 
@@ -292,6 +294,7 @@ def _exchange_chart(df: pd.DataFrame, unit: str, title: str) -> go.Figure:
         xaxis_title="",
         legend_title_text="",
     )
+    fig.update_xaxes(hoverformat="%d.%m.%Y")
     return fig
 
 
@@ -307,5 +310,6 @@ def _loss_chart(df: pd.DataFrame, unit: str, title: str) -> go.Figure:
         color_discrete_sequence=["#8a7a9b"],
     )
     fig.update_layout(**CHART_LAYOUT)
+    fig.update_xaxes(hoverformat="%d.%m.%Y")
     fig.update_traces(hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>")
     return fig

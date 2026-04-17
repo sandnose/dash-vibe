@@ -66,7 +66,7 @@ def build_choropleth(
         muni_id = feature["properties"].get("kommunenummer", "")
         val = capacity_lookup.get(muni_id, 0.0)
         feature["properties"]["installert_kw"] = (
-            f"{val:,.0f} kW" if val > 0 else "Ingen data"
+            f"{val:,.0f} kW".replace(",", "\u202f") if val > 0 else "Ingen data"
         )
 
     def style_fn(feature: dict) -> dict:

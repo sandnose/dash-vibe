@@ -48,6 +48,7 @@ def history_chart(df: pd.DataFrame, municipality_name: str) -> go.Figure:
         title=f"Installert kapasitet over tid — {municipality_name}",
     )
     fig.update_layout(**CHART_LAYOUT, legend_title_text="")
+    fig.update_xaxes(hoverformat="%d.%m.%Y")
     fig.update_traces(hovertemplate="%{y:,.0f} kW<extra></extra>")
     return fig
 

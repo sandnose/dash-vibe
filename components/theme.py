@@ -12,5 +12,6 @@ CHART_LAYOUT: dict = {
     "title_font_size": 16,
     "title_font_color": "#1a3a2a",
     "hovermode": "x unified",
+    "separators": ", ",  # Norwegian: space=thousands, comma=decimal
     "margin": {"l": 0, "r": 16, "t": 48, "b": 0},
 }
