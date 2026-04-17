@@ -287,28 +287,17 @@ if mode == "capacity":
                 all_municipalities["municipality_name"] == selected_name, "municipality_id"
             ].values[0]
 
-            months_back = st.slider("Måneder historikk", min_value=1, max_value=24, value=12)
-            load_history = st.button("Vis historikk", type="primary")
+            months_back = st.slider("Måneder historikk", min_value=1, max_value=60, value=12)
 
         with col_chart:
-            if load_history:
-                with st.spinner(f"Laster historikk for {selected_name}…"):
-                    hist_df = fetch_history(selected_id, months=months_back)
-                if hist_df.empty:
-                    st.info("Ingen historiske data funnet for denne kommunen.")
-                else:
-                    st.plotly_chart(
-                        history_chart(hist_df, selected_name),
-                        use_container_width=True,
-                    )
+            with st.spinner(f"Laster historikk for {selected_name}…"):
+                hist_df = fetch_history(selected_id, months=months_back)
+            if hist_df.empty:
+                st.info("Ingen historiske data funnet for denne kommunen.")
             else:
-                st.markdown(
-                    '<div style="display:flex;align-items:center;justify-content:center;'
-                    'height:320px;color:#ccc;font-family:\'EB Garamond\',serif;'
-                    'font-size:1.15rem;font-style:italic;">'
-                    'Velg en kommune og last inn historikk for å se utvikling over tid'
-                    '</div>',
-                    unsafe_allow_html=True,
+                st.plotly_chart(
+                    history_chart(hist_df, selected_name),
+                    use_container_width=True,
                 )
 
     # ── Topp kommuner ─────────────────────────────────────────────────────────
