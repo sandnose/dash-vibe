@@ -48,6 +48,7 @@ def history_chart(df: pd.DataFrame, municipality_name: str) -> go.Figure:
         title=f"Installert kapasitet over tid — {municipality_name}",
     )
     fig.update_layout(**CHART_LAYOUT, legend_title_text="")
+    fig.update_traces(hovertemplate="%{y:,.0f} kW<extra></extra>")
     return fig
 
 
@@ -81,5 +82,5 @@ def leaders_chart(df: pd.DataFrame, group: str, top_n: int = 10) -> go.Figure:
         },
         title=f"Topp {top_n} kommuner — {label_production_group(group)}",
     )
-    fig.update_layout(**CHART_LAYOUT, showlegend=False)
+    fig.update_layout(**CHART_LAYOUT, showlegend=False, hovermode=False)
     return fig

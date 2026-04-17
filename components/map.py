@@ -11,7 +11,7 @@ def _build_colormap(max_val: float) -> LinearColormap:
         colors=["#eaf4fb", "#9ecae1", "#3182bd", "#08519c", "#08306b"],
         vmin=0,
         vmax=max_val,
-        caption="Installed capacity (kW)",
+        caption="Installert kapasitet (kW)",
     )
 
 
@@ -61,6 +61,14 @@ def build_choropleth(
         zip(agg["municipality_id"], agg["installed_capacity_kw"], strict=False)
     )
 
+    # Inject capacity into GeoJSON properties so the tooltip can display it
+    for feature in geojson["features"]:
+        muni_id = feature["properties"].get("kommunenummer", "")
+        val = capacity_lookup.get(muni_id, 0.0)
+        feature["properties"]["installert_kw"] = (
+            f"{val:,.0f} kW" if val > 0 else "Ingen data"
+        )
+
     def style_fn(feature: dict) -> dict:
         muni_id: str = feature["properties"].get("kommunenummer", "")
         val: float = capacity_lookup.get(muni_id, 0.0)
@@ -87,8 +95,8 @@ def build_choropleth(
         highlight_function=highlight_fn,
         zoom_on_click=False,
         tooltip=folium.GeoJsonTooltip(
-            fields=["kommunenummer", "kommunenavn"],
-            aliases=["ID:", "Municipality:"],
+            fields=["kommunenavn", "installert_kw"],
+            aliases=["Kommune:", "Installert kapasitet:"],
             localize=True,
         ),
     ).add_to(m)
