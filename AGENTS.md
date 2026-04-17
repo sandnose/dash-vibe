@@ -15,6 +15,7 @@
 | Test | rarely needs PRs — files issues instead |
 
 PRs are reviewed and merged by Christoffer. One issue per PR.
+**PRs that change behaviour without updating the relevant docs will be sent back — see the documentation contract in `CLAUDE.md`.**
 
 ## GitHub authentication
 **Always use the token from `.env` for all GitHub operations — never interactive HTTPS.**
