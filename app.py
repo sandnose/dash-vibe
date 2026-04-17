@@ -279,9 +279,11 @@ if mode == "capacity":
         col_sel, col_chart = st.columns([1, 3])
 
         with col_sel:
+            muni_names = all_municipalities["municipality_name"].tolist()
             selected_name = st.selectbox(
                 "Kommune",
-                options=all_municipalities["municipality_name"].tolist(),
+                options=muni_names,
+                index=muni_names.index("Oslo") if "Oslo" in muni_names else 0,
             )
             selected_id = all_municipalities.loc[
                 all_municipalities["municipality_name"] == selected_name, "municipality_id"
