@@ -36,7 +36,7 @@ Norway's electricity data hub. Built with Streamlit + Folium + Plotly.
 ## Repo structure
 ```
 dash-vibe/
-├── app.py                  # Streamlit entrypoint — 3 tabs: Map, History, Leaders
+├── app.py                  # Streamlit entrypoint — sidebar nav + tabs per mode
 ├── elhub/
 │   ├── client.py           # API client, st.cache_data caching, month pagination
 │   ├── models.py           # Pydantic models + DataFrame flattening
@@ -77,7 +77,7 @@ just check   # lint + test
 - **Dataset logic:** always use `elhub/datasets.py` registry, never hardcode dataset IDs in app logic
 
 ## Architecture decisions (context for why things are the way they are)
-- History tab uses a **Load button** (not auto-fetch) to avoid triggering 12 API calls on tab switch
+- History tab auto-fetches on municipality/month change (no load button)
 - GeoJSON is fetched at runtime (not committed) — cached 24h via st.cache_data
 - Snapshot always shows **latest available date** (looks back 7 days for data lag)
 - Month pagination steps back calendar month by calendar month, never exceeding 1-month window
@@ -114,5 +114,9 @@ Key decisions made together with Christoffer:
 - E18/E19 toggle kept as meaningful split (grid vs prosumer scale)
 - Log scale rejected in favour of keeping UX simple
 - Snapshot-only map (no date picker) since installed capacity is slow-changing
-- History tab shows development over time per municipality
+- History tab auto-fetches — no load button needed since it only fetches one municipality
 - Leaders tab shows top N per production group
+- Sidebar mode switch (Kapasitet vs Volum) separates fundamentally different dataset types:
+  - **Kapasitet** → tabs: Kart, Historikk, Topp kommuner, Forklaring
+  - **Volum** → tabs: Analyse, Forklaring
+- Map preserves pan/zoom state across filter changes via st.session_state

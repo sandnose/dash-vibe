@@ -137,4 +137,6 @@ uv run pytest tests/e2e/ --headed -v                  # headed (debug)
 uv run pytest tests/e2e/ --screenshot=only-on-failure  # screenshots on failure
 ```
 
-Tests: `test_map_tab.py`, `test_history_tab.py`, `test_leaders_tab.py`
+Tests:
+- `test_kapasitet.py` — sidebar, Kart, Historikk, Topp kommuner tabs
+- `test_volum.py` — Volum mode, Analyse tab
