@@ -214,6 +214,7 @@ def _production_chart(
         title=title,
     )
     fig.update_layout(**CHART_LAYOUT, legend_title_text="", barmode="stack")
+    fig.update_traces(hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>")
     return fig
 
 
@@ -265,6 +266,7 @@ def _consumption_chart(
         title=title,
     )
     fig.update_layout(**CHART_LAYOUT, legend_title_text="", barmode="stack")
+    fig.update_traces(hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>")
     return fig
 
 
@@ -274,11 +276,13 @@ def _exchange_chart(df: pd.DataFrame, unit: str, title: str) -> go.Figure:
         fig.add_trace(go.Bar(
             x=df["time"], y=df["exchangeInQuantityKwh"],
             name="Import", marker_color="#1a6b8a",
+            hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>",
         ))
     if "exchangeOutQuantityKwh" in df.columns:
         fig.add_trace(go.Bar(
             x=df["time"], y=-df["exchangeOutQuantityKwh"],
             name="Eksport", marker_color="#c0543a",
+            hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>",
         ))
     fig.update_layout(
         **CHART_LAYOUT,
@@ -303,4 +307,5 @@ def _loss_chart(df: pd.DataFrame, unit: str, title: str) -> go.Figure:
         color_discrete_sequence=["#8a7a9b"],
     )
     fig.update_layout(**CHART_LAYOUT)
+    fig.update_traces(hovertemplate=f"%{{y:,.1f}} {unit}<extra></extra>")
     return fig
