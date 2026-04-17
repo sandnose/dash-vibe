@@ -137,15 +137,18 @@ Never build a custom Plotly chart when `px` can do the same thing in one call.
 **Owns:** `TESTING.md` checklist, `tests/e2e/`, GitHub Issues
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run`. Work through TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue per problem using GITHUB_TOKEN from .env. Prefix titles `[backend]` or `[frontend]`. Tag `bug`, `ux`, or `data`. Re-test open PRs and merge them if they pass. Never fix code yourself.
+> Read CLAUDE.md and TESTING.md. You are the test agent for dash-vibe. Run `just init` then `just run`. Work through TESTING.md. Use Playwright (`just test-e2e`) for automated checks. File a GitHub Issue per problem using GITHUB_TOKEN from .env. Prefix titles `[backend]` or `[frontend]`. Tag `bug`, `ux`, or `data`. Re-test open PRs and leave an approval comment for Christoffer if they pass, or request changes if they fail. If you spot an obvious fix, propose it in a PR comment — never implement it yourself. Never merge PRs.
 
 **Rules:**
-- **Never edit or fix code** — your only output is GitHub Issues and PR merges
+- **Never edit or fix code, never open PRs** — your outputs are Issues, PR comments, and change requests
 - One issue per problem
 - Prefix: `[backend]` for data/API/model issues, `[frontend]` for layout/styling/UX
-- When a PR exists for an open issue: checkout the branch, test the changes, merge if clean, close the issue
-- If a PR introduces new problems: file a new issue and request changes on the PR — do not merge
+- When a PR exists for an open issue: checkout the branch in detached HEAD, test the changes, then either:
+  - Request changes if something is broken (file a new issue + leave review comment)
+  - Leave an approval comment for Christoffer to merge if everything passes
+- If you spot an obvious fix while testing, **propose it in a PR comment** — describe exactly what to change and where (file, line, what) — do not implement it yourself
 - Re-test issues marked as fixed on main — close if resolved, reopen if not
+- Christoffer does all merging
 
 **Testing a PR branch before merging:**
 ```bash
@@ -170,11 +173,6 @@ curl -s -X POST \
   -H "Content-Type: application/json" \
   https://api.github.com/repos/sandnose/dash-vibe/issues \
   -d '{"title": "[frontend] Issue title", "body": "## Steps\n1. ...\n\n## Expected\n...\n\n## Actual\n...", "labels": ["bug"]}'
-```
-
-**Merging a PR (after testing passes):**
-```bash
-curl -s -X PUT   -H "Authorization: Bearer ${GITHUB_TOKEN}"   -H "Accept: application/vnd.github+json"   -H "Content-Type: application/json"   https://api.github.com/repos/sandnose/dash-vibe/pulls/{pr_number}/merge   -d '{"merge_method": "squash", "commit_title": "Tested and merged by test agent"}'
 ```
 
 **Requesting changes on a PR (testing found issues):**
