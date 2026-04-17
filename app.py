@@ -122,7 +122,7 @@ with st.sidebar:
         st.caption(
             "**Installert kapasitet** (kW) — hva som er bygget. "
             "Viser det maksimale kraftpotensialet per kommune, "
-            "fordelt på produksjonstype og målerpunktkategori."
+            "fordelt på produksjonstype og målepunkttype."
         )
     else:
         st.caption(
@@ -187,7 +187,7 @@ Tenk på det som motorkraften i en bil: du har 200 hk, men kjører ikke alltid f
         for group_id, label in PRODUCTION_GROUP_LABELS.items():
             st.markdown(f"**{label}** — {descriptions.get(group_id, '')}")
 
-    with st.expander("📍 Målerpunktkategorier"):
+    with st.expander("📍 Målepunkttyper"):
         st.markdown("""
 **Produksjon** *(tidligere E18)*
 Store, nettilkoblede kraftanlegg som leverer strøm direkte til nettet.
@@ -261,7 +261,7 @@ if mode == "capacity":
             )
 
             metering_raw = st.radio(
-                "Målerpunktkategori",
+                "Målepunkttype",
                 options=["Both", "E18", "E19"],
                 format_func=label_metering_type,
                 index=0,

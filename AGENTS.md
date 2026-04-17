@@ -71,6 +71,14 @@ git remote set-url origin https://${GITHUB_TOKEN}@github.com/sandnose/dash-vibe.
 All `git push`, `git pull`, `git clone` operations must use the token-embedded remote URL above.
 Never use `gh auth login` or browser-based OAuth.
 
+## Terminology verification
+
+**Before writing any Norwegian electricity term in UI text, labels, or docs — verify it against:**
+- [elhub.no](https://www.elhub.no)
+- [dok.elhub.no](https://dok.elhub.no)
+
+Do not guess. Known correct terms are listed in `CLAUDE.md` under Terminology rules.
+
 ## UI language rules
 - **All user-facing text is in Norwegian** — labels, tooltips, tab names, error messages, captions
 - **Code stays in English** — variable names, function names, comments, commit messages

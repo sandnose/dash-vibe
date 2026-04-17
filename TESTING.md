@@ -41,14 +41,14 @@ The app has two navigation levels:
 - [ ] Map renders without errors on load
 - [ ] Snapshot date label shown above controls (styled, not plain text)
 - [ ] All production groups shown in multiselect: solkraft, vannkraft, vindkraft, varmekraft, annet
-- [ ] Målerpunktkategori radio shows: Begge, Produksjon, Plusspunkt (not E18/E19)
+- [ ] Målepunkttype radio shows: Begge, Produksjon, Plusspunkt (not E18/E19)
 - [ ] Norway is reasonably visible without heavy panning on load
 - [ ] Municipalities are coloured — not all grey
 - [ ] Legend is readable — no NaN, no overlapping numbers
 - [ ] Hovering a municipality shows tooltip with ID and Norwegian name
 - [ ] Clicking a municipality does NOT show a bounding box square
 - [ ] Map pan/zoom position is preserved when changing production group filter
-- [ ] Map pan/zoom position is preserved when changing målerpunktkategori
+- [ ] Map pan/zoom position is preserved when changing målepunkttype
 - [ ] Deselecting all production groups shows info message, not error
 
 ### Historikk tab

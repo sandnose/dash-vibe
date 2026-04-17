@@ -43,7 +43,7 @@ INSTALLED_CAPACITY_MUNICIPALITY = DatasetConfig(
             ["solar", "hydro", "wind", "thermal", "other"],
             "Produksjonstype",
         ),
-        FilterConfig("meteringPointType", ["E18", "E19"], "Målerpunktkategori"),
+        FilterConfig("meteringPointType", ["E18", "E19"], "Målepunkttype"),
     ],
 )
 
@@ -63,7 +63,7 @@ INSTALLED_CAPACITY_MUNICIPALITY_BSU = DatasetConfig(
             ["solar", "hydro", "wind", "thermal", "other"],
             "Produksjonstype",
         ),
-        FilterConfig("meteringPointType", ["E18", "E19"], "Målerpunktkategori"),
+        FilterConfig("meteringPointType", ["E18", "E19"], "Målepunkttype"),
     ],
 )
 
@@ -83,7 +83,7 @@ INSTALLED_CAPACITY_MBA = DatasetConfig(
             ["solar", "hydro", "wind", "thermal", "other"],
             "Produksjonstype",
         ),
-        FilterConfig("meteringPointType", ["E18", "E19"], "Målerpunktkategori"),
+        FilterConfig("meteringPointType", ["E18", "E19"], "Målepunkttype"),
     ],
 )
 
@@ -129,8 +129,8 @@ PRODUCTION_PER_GROUP_MBA_15MIN = DatasetConfig(
 
 PRODUCTION_PER_TYPE_MUNICIPALITY_HOUR = DatasetConfig(
     id="PRODUCTION_PER_METERING_POINT_TYPE_MUNICIPALITY_HOUR",
-    label_no="Produksjon per målerpunktkategori",
-    description_no="Faktisk kraftproduksjon per time og målerpunktkategori for kommune (kWh).",
+    label_no="Produksjon per målepunkttype",
+    description_no="Faktisk kraftproduksjon per time og målepunkttype for kommune (kWh).",
     geo_levels=["municipalities"],
     dataset_type="volume",
     resolution="hourly",
@@ -138,7 +138,7 @@ PRODUCTION_PER_TYPE_MUNICIPALITY_HOUR = DatasetConfig(
     value_field="quantityKwh",
     unit="kWh",
     filters=[
-        FilterConfig("meteringPointType", ["E18", "E19"], "Målerpunktkategori"),
+        FilterConfig("meteringPointType", ["E18", "E19"], "Målepunkttype"),
     ],
 )
 

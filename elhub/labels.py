@@ -21,6 +21,7 @@ PRODUCTION_GROUP_DESCRIPTIONS: dict[str, str] = {
     "other": "Andre eller uspesifiserte produksjonsteknologier.",
 }
 
+# Source: dok.elhub.no — official term is "målepunkttype", values "E18" and "E19"
 METERING_TYPE_LABELS: dict[str, str] = {
     "E18": "Produksjon",
     "E19": "Plusspunkt",
@@ -68,6 +69,7 @@ def label_production_group(group: str) -> str:
 
 
 def label_metering_type(code: str) -> str:
+    """Return Norwegian display name for a målepunkttype code (E18/E19)."""
     return METERING_TYPE_LABELS.get(code, code)
 
 

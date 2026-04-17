@@ -136,6 +136,25 @@ just fix        # auto-fix lint issues
 
 ---
 
+## Terminology rules
+
+**All Norwegian electricity terminology must be verified against official Elhub sources:**
+- [elhub.no](https://www.elhub.no) — official portal
+- [dok.elhub.no](https://dok.elhub.no) — technical documentation
+
+Do not invent or guess Norwegian electricity terms. If unsure, check the source.
+
+Known correct terms (verified):
+| Correct | Wrong | Notes |
+|---|---|---|
+| målepunkt | målerpunkt | Official Elhub term |
+| målepunkttype | målerpunktkategori | E18/E19 classification |
+| plusspunkt | — | E19 consumer+producer |
+| produksjon | — | E18 large-scale production |
+| prisområde | — | NO1–NO5 price areas |
+
+---
+
 ## Design system
 - **Single source of truth:** `DESIGN.md` — read before touching anything visual
 - **Chart layout:** always import `CHART_LAYOUT` from `components/theme.py`, never redefine locally
