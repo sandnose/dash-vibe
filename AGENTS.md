@@ -7,6 +7,46 @@
 4. **Never push directly to main** — branch and open a PR
 5. Run `just check` before opening a PR
 
+## Worktree setup (required for parallel agents)
+
+Git is single-branch per working directory. If multiple agents share the same directory,
+a branch switch by one agent affects all others. Use **git worktrees** to give each agent
+its own isolated directory.
+
+**Initial setup (run once):**
+```bash
+# From the main dash-vibe directory
+git worktree add ../dash-vibe-backend -b backend/your-issue
+git worktree add ../dash-vibe-ux -b ux/your-issue
+```
+
+**Each agent then works in its own directory:**
+```bash
+# Backend agent
+cd ~/private/dash-vibe-backend
+claude  # starts in its own branch, isolated from others
+
+# UX agent
+cd ~/private/dash-vibe-ux
+claude  # starts in its own branch, isolated from others
+```
+
+**Before starting work, always verify your branch:**
+```bash
+git branch --show-current  # must match your assigned branch
+git status                 # must be clean or your own changes only
+```
+
+If the branch is wrong — stop immediately, do not commit, tell Christoffer.
+
+**Cleanup after PR is merged:**
+```bash
+git worktree remove ../dash-vibe-backend
+git branch -d backend/your-issue
+```
+
+---
+
 ## Branch & PR convention
 | Agent | Branch pattern |
 |---|---|
@@ -55,7 +95,7 @@ Never build a custom Plotly chart when `px` can do the same thing in one call.
 **Owns:** `elhub/`, `components/charts.py` (data logic), `app.py` (data wiring), `tests/`
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md and skills/elhub.md. You are the backend/architecture agent for dash-vibe. Check open GitHub Issues prefixed with `[backend]`. Fix issues with backend root causes. Work on branch `backend/issue-{n}-description`. Configure git remote with the token from .env (see AGENTS.md auth section). Run `just check` then open a PR. Never push to main.
+> Read CLAUDE.md and skills/elhub.md. You are the backend/architecture agent for dash-vibe. **First: run `git branch --show-current` and `git status` — if the branch is not yours, stop and tell Christoffer.** Check open GitHub Issues prefixed with `[backend]`. Fix issues with backend root causes. Work on branch `backend/issue-{n}-description`. Configure git remote with the token from .env (see AGENTS.md auth section). Run `just check` then open a PR. Never push to main.
 
 **Rules:**
 - Branch + PR — never push directly to main
@@ -73,7 +113,7 @@ Never build a custom Plotly chart when `px` can do the same thing in one call.
 **Owns:** `app.py` (layout, styling), `components/map.py`, `components/charts.py` (visuals)
 
 **Startup prompt for Claude Code:**
-> Read CLAUDE.md and skills/elhub.md (especially the Norwegian label mapping). You are the UX/frontend agent for dash-vibe. Check open GitHub Issues prefixed with `[frontend]`. Work on branch `ux/issue-{n}-description`. Configure git remote with token from .env (see AGENTS.md auth section). Run `just run` to start app, `just test-e2e` to verify. Open a PR when done. Never push to main. Never touch `elhub/` data logic.
+> Read CLAUDE.md and skills/elhub.md (especially the Norwegian label mapping). You are the UX/frontend agent for dash-vibe. **First: run `git branch --show-current` and `git status` — if the branch is not yours, stop and tell Christoffer.** Check open GitHub Issues prefixed with `[frontend]`. Work on branch `ux/issue-{n}-description`. Configure git remote with token from .env (see AGENTS.md auth section). Run `just run` to start app, `just test-e2e` to verify. Open a PR when done. Never push to main. Never touch `elhub/` data logic.
 
 **Rules:**
 - Branch + PR — never push directly to main
