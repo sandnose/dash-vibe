@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from calendar import monthrange
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
 import httpx
@@ -23,6 +24,7 @@ def _month_window(year: int, month: int) -> tuple[date, date]:
     return date(year, month, 1), date(year, month, last_day)
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
 def _fetch_raw(
     geo_level: str,
     dataset_id: str,
@@ -91,24 +93,43 @@ def fetch_latest_snapshot() -> pd.DataFrame:
 def fetch_history(municipality_id: str, months: int = 12) -> pd.DataFrame:
     """
     Fetch monthly installed capacity history for a single municipality.
-    Paginates strictly by calendar month to stay within 1-month API window.
+    Uses last day of each completed month as the target date; today-7 for
+    the current partial month. Fetches in parallel (4 workers).
     """
-    frames: list[pd.DataFrame] = []
     today = date.today()
+    current_year, current_month = today.year, today.month
 
+    windows: list[tuple[int, int, date, date, date]] = []
     for i in range(months):
-        month = today.month - i
-        year = today.year + (month - 1) // 12
-        month = ((month - 1) % 12) + 1
+        m = today.month - i
+        y = today.year + (m - 1) // 12
+        m = ((m - 1) % 12) + 1
 
-        start, end = _month_window(year, month)
-        end = min(end, today)
+        if y == current_year and m == current_month:
+            target = today - timedelta(days=7)
+        else:
+            target = _month_window(y, m)[1]
 
-        df = _fetch_single_municipality(municipality_id, start, end)
-        if not df.empty:
-            latest_in_month = df["usage_date"].max()
-            frames.append(df[df["usage_date"] == latest_in_month])
+        win_start = max(target - timedelta(days=2), date(y, m, 1))
+        win_end = min(target + timedelta(days=2), today)
+        windows.append((y, m, target, win_start, win_end))
 
+    def _fetch_one(args: tuple[int, int, date, date, date]) -> pd.DataFrame | None:
+        _y, _m, target, win_start, win_end = args
+        try:
+            df = _fetch_single_municipality(municipality_id, win_start, win_end)
+            if df.empty:
+                return None
+            closest_idx = (df["usage_date"] - pd.Timestamp(target)).abs().idxmin()
+            snap_date = df["usage_date"].iloc[closest_idx]
+            return df[df["usage_date"] == snap_date].copy()
+        except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(_fetch_one, windows))
+
+    frames = [r for r in results if r is not None and not r.empty]
     if not frames:
         return pd.DataFrame()
     return pd.concat(frames, ignore_index=True)
@@ -137,25 +158,30 @@ def fetch_volume(
         entity_id: Optional specific entity (municipality ID or price area ID).
     """
     dataset = DATASETS_BY_ID[dataset_id]
-    frames: list[pd.DataFrame] = []
 
-    # Paginate by month if window exceeds max
+    windows: list[tuple[date, date]] = []
     current = start
     while current <= end:
-        # Determine window end: min(end of current month, requested end)
         month_last = date(current.year, current.month, monthrange(current.year, current.month)[1])
         window_end = min(month_last, end)
-
-        raw = _fetch_raw(geo_level, dataset_id, current, window_end, entity_id)
-        df = _flatten_volume_response(raw, dataset, geo_level)
-        if not df.empty:
-            frames.append(df)
-
-        # Step to first of next month
+        windows.append((current, window_end))
         if month_last >= end:
             break
-        current = date(month_last.year, month_last.month, month_last.day) + timedelta(days=1)
+        current = month_last + timedelta(days=1)
 
+    def _fetch_window(args: tuple[date, date]) -> pd.DataFrame | None:
+        w_start, w_end = args
+        try:
+            raw = _fetch_raw(geo_level, dataset_id, w_start, w_end, entity_id)
+            df = _flatten_volume_response(raw, dataset, geo_level)
+            return df if not df.empty else None
+        except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(_fetch_window, windows))
+
+    frames = [r for r in results if r is not None and not r.empty]
     if not frames:
         return pd.DataFrame()
     return pd.concat(frames, ignore_index=True)
