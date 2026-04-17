@@ -6,3 +6,6 @@ __pycache__/
 *.egg-info/
 dist/
 .DS_Store
+
+# Generated grunnkrets GeoJSON files (built from data/raw/grunnkretser.zip)
+data/grunnkretser/*.geojson
