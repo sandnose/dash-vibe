@@ -163,7 +163,7 @@ def render_analyse_tab(
         else:
             fig = _consumption_chart(df, group_col, dataset.value_field, unit, title)
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Disclosure for municipality consumption groups
         if analyse_type == "consumption" and geo_level == "municipalities":
