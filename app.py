@@ -271,6 +271,16 @@ if mode == "capacity":
             if not selected_groups:
                 st.info("Velg minst én produksjonstype.")
             else:
+                # Detect filter changes so we only update stored view on
+                # map-interaction reruns, not on filter-change reruns.
+                # (st_folium echoes back our init values on filter reruns,
+                # which would overwrite the user's actual pan/zoom position.)
+                filter_key = (tuple(sorted(selected_groups)), metering_raw)
+                filter_changed = (
+                    st.session_state.get("map_filter_key") != filter_key
+                )
+                st.session_state["map_filter_key"] = filter_key
+
                 m = build_choropleth(
                     snapshot_df, geojson, selected_groups, metering_raw,
                     center=st.session_state.get("map_center", (65, 15)),
@@ -280,11 +290,12 @@ if mode == "capacity":
                     m, use_container_width=True, height=600,
                     returned_objects=["center", "zoom"],
                 )
-                if map_state.get("center"):
-                    c = map_state["center"]
-                    st.session_state["map_center"] = (c["lat"], c["lng"])
-                if map_state.get("zoom"):
-                    st.session_state["map_zoom"] = map_state["zoom"]
+                if not filter_changed:
+                    if map_state.get("center"):
+                        c = map_state["center"]
+                        st.session_state["map_center"] = (c["lat"], c["lng"])
+                    if map_state.get("zoom"):
+                        st.session_state["map_zoom"] = map_state["zoom"]
 
     # ── Historikk ─────────────────────────────────────────────────────────────
     with tab_history:
