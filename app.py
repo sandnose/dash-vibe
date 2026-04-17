@@ -311,7 +311,7 @@ if mode == "capacity":
             else:
                 st.plotly_chart(
                     history_chart(hist_df, selected_name),
-                    use_container_width=True,
+                    width="stretch",
                 )
 
     # ── Topp kommuner ─────────────────────────────────────────────────────────
@@ -327,7 +327,7 @@ if mode == "capacity":
             with cols[i % 2]:
                 st.plotly_chart(
                     leaders_chart(snapshot_df, group, top_n=top_n),
-                    use_container_width=True,
+                    width="stretch",
                 )
 
     # ── Forklaring ────────────────────────────────────────────────────────────
