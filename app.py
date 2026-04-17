@@ -272,7 +272,7 @@ if mode == "capacity":
                 st.info("Velg minst én produksjonstype.")
             else:
                 m = build_choropleth(snapshot_df, geojson, selected_groups, metering_raw)
-                st_folium(m, use_container_width=True, height=850, returned_objects=[])
+                st_folium(m, use_container_width=True, height=600, returned_objects=[])
 
     # ── Historikk ─────────────────────────────────────────────────────────────
     with tab_history:
