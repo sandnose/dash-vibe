@@ -16,7 +16,7 @@ from elhub.labels import (
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="dash-vibe · Norsk Elektrisitet",
+    page_title="Norsk Elektrisitet",
     page_icon="⚡",
     layout="wide",
 )
@@ -29,6 +29,16 @@ st.markdown("""
 
     /* Brand background */
     .stApp { background-color: #fafaf7; }
+
+    /* Sidebar — slightly warmer shade to distinguish from main canvas */
+    [data-testid="stSidebar"] { background-color: #ede9e0; }
+    [data-testid="stSidebar"] h2 {
+        font-family: 'EB Garamond', serif;
+        color: #1a3a2a;
+        font-size: 1.3rem;
+        font-weight: 400;
+        margin-bottom: 0.1rem;
+    }
 
     /* Typography */
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
@@ -72,27 +82,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── Header ─────────────────────────────────────────────────────────────────────
-col_title, col_info = st.columns([10, 1])
-with col_title:
-    st.title("⚡ Norsk Elektrisitetsdashbord")
-    st.caption("Data fra [Elhub](https://api.elhub.no) · Åpne data")
-with col_info:
-    with st.popover("ℹ️"):
-        st.markdown("""
-### Om dashbordet
-Visualiserer åpne datasett fra **Elhub** — Norges datahub for elektrisitet.
-
-**Kilder**
-- Kraftdata: [api.elhub.no](https://api.elhub.no)
-- Kommunekart: [robhop/fylker-og-kommuner](https://github.com/robhop/fylker-og-kommuner)
-  *(Takk til Robert Hopland for kartdataene!)*
-- Kartverkets data under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
-
-**Kildekode**
-[github.com/sandnose/dash-vibe](https://github.com/sandnose/dash-vibe)
-        """)
-
 # ── Load shared data ───────────────────────────────────────────────────────────
 with st.spinner("Laster inn data…"):
     snapshot_df = fetch_latest_snapshot()
@@ -111,136 +100,67 @@ all_municipalities = (
 )
 all_price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
 
-# ── Tabs ───────────────────────────────────────────────────────────────────────
-tab_map, tab_history, tab_leaders, tab_analyse, tab_explain = st.tabs([
-    "🗺️ Kart",
-    "📈 Historikk",
-    "🏆 Topp kommuner",
-    "🔬 Analyse",
-    "📖 Forklaring",
-])
-
-# ════════════════════════════════════════════════════════════════════════════════
-# TAB 1 — KART
-# ════════════════════════════════════════════════════════════════════════════════
-with tab_map:
-    col_controls, col_map = st.columns([1, 3])
-
-    with col_controls:
-        st.markdown(
-            f'<div style="margin-bottom:1.25rem">'
-            f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:3px">Data per</div>'
-            f'<div style="font-family:\'EB Garamond\',serif;font-size:1.1rem;color:#1a3a2a">{latest_date.strftime("%d. %b %Y")}</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-        selected_groups = st.multiselect(
-            "Produksjonstype",
-            options=all_groups,
-            default=all_groups,
-            format_func=label_production_group,
-        )
-
-        metering_raw = st.radio(
-            "Målerpunktkategori",
-            options=["Both", "E18", "E19"],
-            format_func=label_metering_type,
-            index=0,
-        )
-
-    with col_map:
-        if not selected_groups:
-            st.info("Velg minst én produksjonstype.")
-        else:
-            m = build_choropleth(snapshot_df, geojson, selected_groups, metering_raw)
-            st_folium(m, use_container_width=True, height=850, returned_objects=[])
-
-# ════════════════════════════════════════════════════════════════════════════════
-# TAB 2 — HISTORIKK
-# ════════════════════════════════════════════════════════════════════════════════
-with tab_history:
-    col_sel, col_chart = st.columns([1, 3])
-
-    with col_sel:
-        selected_name = st.selectbox(
-            "Kommune",
-            options=all_municipalities["municipality_name"].tolist(),
-        )
-        selected_id = all_municipalities.loc[
-            all_municipalities["municipality_name"] == selected_name, "municipality_id"
-        ].values[0]
-
-        months_back = st.slider("Måneder historikk", min_value=1, max_value=24, value=12)
-        load_history = st.button("Vis historikk", type="primary")
-
-    with col_chart:
-        if load_history:
-            with st.spinner(f"Laster historikk for {selected_name}…"):
-                hist_df = fetch_history(selected_id, months=months_back)
-            if hist_df.empty:
-                st.info("Ingen historiske data funnet for denne kommunen.")
-            else:
-                st.plotly_chart(
-                    history_chart(hist_df, selected_name),
-                    use_container_width=True,
-                )
-        else:
-            st.info("Velg en kommune og klikk **Vis historikk**.")
-
-# ════════════════════════════════════════════════════════════════════════════════
-# TAB 3 — TOPP KOMMUNER
-# ════════════════════════════════════════════════════════════════════════════════
-with tab_leaders:
+# ── Sidebar ────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## Norsk Elektrisitet")
     st.markdown(
-        f'<div style="margin-bottom:1.25rem">'
-        f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:3px">Data per</div>'
-        f'<div style="font-family:\'EB Garamond\',serif;font-size:1.1rem;color:#1a3a2a">{latest_date.strftime("%d. %b %Y")}</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
-    top_n = st.slider("Antall kommuner", min_value=5, max_value=20, value=10)
-
-    cols = st.columns(2)
-    for i, group in enumerate(["hydro", "solar", "wind", "thermal", "other"]):
-        if group not in all_groups:
-            continue
-        with cols[i % 2]:
-            st.plotly_chart(
-                leaders_chart(snapshot_df, group, top_n=top_n),
-                use_container_width=True,
-            )
-
-# ════════════════════════════════════════════════════════════════════════════════
-# TAB 4 — ANALYSE
-# ════════════════════════════════════════════════════════════════════════════════
-with tab_analyse:
-    st.markdown("### Analyser kraft- og forbruksdata")
-
-    geo_level = st.radio(
-        "Geografisk nivå",
-        options=["price-areas", "municipalities"],
-        format_func=lambda x: {"price-areas": "Prisområde", "municipalities": "Kommune"}[x],
-        horizontal=True,
+        "Utforsk installert kapasitet og faktisk kraftvolum "
+        "fra norske kommuner og prisområder. "
+        "Data fra [Elhub](https://api.elhub.no) — åpent og gratis."
     )
 
     st.divider()
 
-    render_analyse_tab(
-        geo_level=geo_level,
-        all_price_areas=all_price_areas,
-        all_municipalities=all_municipalities,
+    mode = st.radio(
+        "Datatype",
+        options=["capacity", "volume"],
+        format_func=lambda x: {"capacity": "⚡ Kapasitet", "volume": "📊 Volum"}[x],
+        label_visibility="collapsed",
     )
 
-# ════════════════════════════════════════════════════════════════════════════════
-# TAB 5 — FORKLARING
-# ════════════════════════════════════════════════════════════════════════════════
-with tab_explain:
+    if mode == "capacity":
+        st.caption(
+            "**Installert kapasitet** (kW) — hva som er bygget. "
+            "Viser det maksimale kraftpotensialet per kommune, "
+            "fordelt på produksjonstype og målerpunktkategori."
+        )
+    else:
+        st.caption(
+            "**Kraftvolum** (kWh) — hva som faktisk skjer. "
+            "Utforsk produksjon, forbruk, nettap og kraftutveksling "
+            "per prisområde eller kommune, time for time."
+        )
+
+    # ── Sidebar footer ─────────────────────────────────────────────────────────
+    st.write("")
+    st.write("")
+    st.divider()
+    st.caption(f"Siste tilgjengelige data: {latest_date.strftime('%d. %b %Y')}")
+    st.caption(
+        "Kraftdata: [Elhub Energy Data API](https://api.elhub.no)  \n"
+        "Kart: [robhop/fylker-og-kommuner](https://github.com/robhop/fylker-og-kommuner) (Kartverket, CC BY 4.0)  \n"
+        "[Kildekode](https://github.com/sandnose/dash-vibe)"
+    )
+
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+def _snapshot_label(d) -> str:
+    return (
+        f'<div style="margin-bottom:1.25rem">'
+        f'<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;'
+        f'color:#999;margin-bottom:3px">Data per</div>'
+        f'<div style="font-family:\'EB Garamond\',serif;font-size:1.1rem;color:#1a3a2a">'
+        f'{d.strftime("%d. %b %Y")}</div>'
+        f'</div>'
+    )
+
+
+def _render_forklaring() -> None:
     st.markdown("## Hva viser dashbordet?")
-    st.markdown("""
-Dette dashbordet visualiserer åpne data fra Elhub — Norges datahub for elektrisitetsmålinger.
-    """)
+    st.markdown(
+        "Dette dashbordet visualiserer åpne data fra Elhub — "
+        "Norges datahub for elektrisitetsmålinger."
+    )
 
     st.divider()
 
@@ -256,15 +176,15 @@ Tenk på det som motorkraften i en bil: du har 200 hk, men kjører ikke alltid f
         """)
 
     with st.expander("🏭 Produksjonstyper"):
+        descriptions = {
+            "solar": "Solcellepaneler som omdanner sollys til elektrisitet.",
+            "hydro": "Vannkraftverk som utnytter rennende eller fallende vann.",
+            "wind": "Vindturbiner som omdanner vindenergi til elektrisitet.",
+            "thermal": "Kraftverk som bruker varme som energikilde (inkl. biomasse, avfall).",
+            "nuclear": "Kjernekraftverk — Norge har ingen per i dag.",
+            "other": "Andre eller uspesifiserte produksjonsteknologier.",
+        }
         for group_id, label in PRODUCTION_GROUP_LABELS.items():
-            descriptions = {
-                "solar": "Solcellepaneler som omdanner sollys til elektrisitet.",
-                "hydro": "Vannkraftverk som utnytter rennende eller fallende vann.",
-                "wind": "Vindturbiner som omdanner vindenergi til elektrisitet.",
-                "thermal": "Kraftverk som bruker varme som energikilde (inkl. biomasse, avfall).",
-                "nuclear": "Kjernekraftverk — Norge har ingen per i dag.",
-                "other": "Andre eller uspesifiserte produksjonsteknologier.",
-            }
             st.markdown(f"**{label}** — {descriptions.get(group_id, '')}")
 
     with st.expander("📍 Målerpunktkategorier"):
@@ -316,3 +236,125 @@ Forholdet mellom faktisk produksjon og teoretisk maks kalles **kapasitetsfaktor*
         "Kart: [robhop/fylker-og-kommuner](https://github.com/robhop/fylker-og-kommuner) "
         "(Kartverket, CC BY 4.0)"
     )
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# KAPASITET — Kart, Historikk, Topp kommuner
+# ════════════════════════════════════════════════════════════════════════════════
+if mode == "capacity":
+    tab_map, tab_history, tab_leaders, tab_explain = st.tabs([
+        "🗺️ Kart", "📈 Historikk", "🏆 Topp kommuner", "📖 Forklaring",
+    ])
+
+    # ── Kart ──────────────────────────────────────────────────────────────────
+    with tab_map:
+        col_controls, col_map = st.columns([1, 3])
+
+        with col_controls:
+            st.markdown(_snapshot_label(latest_date), unsafe_allow_html=True)
+
+            selected_groups = st.multiselect(
+                "Produksjonstype",
+                options=all_groups,
+                default=all_groups,
+                format_func=label_production_group,
+            )
+
+            metering_raw = st.radio(
+                "Målerpunktkategori",
+                options=["Both", "E18", "E19"],
+                format_func=label_metering_type,
+                index=0,
+            )
+
+        with col_map:
+            if not selected_groups:
+                st.info("Velg minst én produksjonstype.")
+            else:
+                m = build_choropleth(snapshot_df, geojson, selected_groups, metering_raw)
+                st_folium(m, use_container_width=True, height=850, returned_objects=[])
+
+    # ── Historikk ─────────────────────────────────────────────────────────────
+    with tab_history:
+        col_sel, col_chart = st.columns([1, 3])
+
+        with col_sel:
+            selected_name = st.selectbox(
+                "Kommune",
+                options=all_municipalities["municipality_name"].tolist(),
+            )
+            selected_id = all_municipalities.loc[
+                all_municipalities["municipality_name"] == selected_name, "municipality_id"
+            ].values[0]
+
+            months_back = st.slider("Måneder historikk", min_value=1, max_value=24, value=12)
+            load_history = st.button("Vis historikk", type="primary")
+
+        with col_chart:
+            if load_history:
+                with st.spinner(f"Laster historikk for {selected_name}…"):
+                    hist_df = fetch_history(selected_id, months=months_back)
+                if hist_df.empty:
+                    st.info("Ingen historiske data funnet for denne kommunen.")
+                else:
+                    st.plotly_chart(
+                        history_chart(hist_df, selected_name),
+                        use_container_width=True,
+                    )
+            else:
+                st.markdown(
+                    '<div style="display:flex;align-items:center;justify-content:center;'
+                    'height:320px;color:#ccc;font-family:\'EB Garamond\',serif;'
+                    'font-size:1.15rem;font-style:italic;">'
+                    'Velg en kommune og last inn historikk for å se utvikling over tid'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+
+    # ── Topp kommuner ─────────────────────────────────────────────────────────
+    with tab_leaders:
+        st.markdown(_snapshot_label(latest_date), unsafe_allow_html=True)
+
+        top_n = st.slider("Antall kommuner", min_value=5, max_value=20, value=10)
+
+        cols = st.columns(2)
+        for i, group in enumerate(["hydro", "solar", "wind", "thermal", "other"]):
+            if group not in all_groups:
+                continue
+            with cols[i % 2]:
+                st.plotly_chart(
+                    leaders_chart(snapshot_df, group, top_n=top_n),
+                    use_container_width=True,
+                )
+
+    # ── Forklaring ────────────────────────────────────────────────────────────
+    with tab_explain:
+        _render_forklaring()
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# VOLUM — Analyse
+# ════════════════════════════════════════════════════════════════════════════════
+else:
+    tab_analyse, tab_explain = st.tabs(["🔬 Analyse", "📖 Forklaring"])
+
+    # ── Analyse ───────────────────────────────────────────────────────────────
+    with tab_analyse:
+        geo_level = st.radio(
+            "Geografisk nivå",
+            options=["price-areas", "municipalities"],
+            format_func=lambda x: {"price-areas": "Prisområde", "municipalities": "Kommune"}[x],
+            horizontal=True,
+        )
+
+        st.divider()
+
+        render_analyse_tab(
+            geo_level=geo_level,
+            all_price_areas=all_price_areas,
+            all_municipalities=all_municipalities,
+        )
+
+    # ── Forklaring ────────────────────────────────────────────────────────────
+    with tab_explain:
+        _render_forklaring()

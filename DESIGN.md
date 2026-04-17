@@ -151,11 +151,27 @@ All load/action buttons use `type="primary"`. The CSS block in `app.py` override
 
 ## Layout principles
 
-- **Column split:** controls on the left, visualisation on the right. Ratio `[1, 3]`.
-- **Tabs:** Norwegian labels, no emoji in tab names (emojis add noise on wider labels).
-- **Load buttons:** lazy-load patterns (History, Analyse) use explicit buttons — never auto-fetch on tab switch.
-- **Map tile layer:** CartoDB no-labels. Keeps the map clean and lets the data speak.
-- **Clean and Scandinavian** — no gaudy dashboard colours, no decorative elements that don't carry data.
+### Navigation hierarchy
+The app has two levels of navigation:
+1. **Sidebar** — primary mode switch: *Kapasitet* (installed capacity, kW) vs *Volum* (energy volume, kWh). These are fundamentally different datasets and the sidebar makes the distinction explicit.
+2. **Tabs** — secondary navigation within each mode.
+
+The sidebar also carries the app identity (name + description), mode-specific context text, and app info at the bottom (data sources, last date, GitHub link). This frees the main canvas from repeated header/meta clutter.
+
+### Sidebar background
+`#ede9e0` — slightly warmer and darker than the main canvas `#fafaf7`. Creates visual hierarchy without being heavy.
+
+### Column split
+Within tabs that have controls, use `[1, 3]` columns: controls left, visualisation right.
+
+### Load buttons
+Lazy-load patterns (Historikk, Analyse) use explicit `st.button(..., type="primary")` — never auto-fetch on tab switch. Prevents triggering multiple API calls unintentionally.
+
+### Map tile layer
+CartoDB no-labels. Keeps the map clean and lets the choropleth data speak.
+
+### Clean and Scandinavian
+No gaudy dashboard colours. No decorative elements that don't carry data.
 
 ---
 
